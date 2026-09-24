@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Panel | Audit Log</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="<%= settings.faviconPath %>" type="image/x-icon">
+    <style>
+        :root {
+            --accent-color: <%= settings.accentColor %>;
+            --accent-color-rgb: <%= accentColorRgb %>;
+            --text-color: #c9d1d9;
+            --title-color: #ffffff;
+            --subtitle-color: #8b949e;
+        }
+
+        .staff-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        h1.title {
+            color: var(--title-color) !important;
+        }
+
+        .subtitle {
+            color: var(--subtitle-color);
+        }
+
+        .pagination {
+            justify-content: center;
+        }
+
+        .pagination a,
+        .pagination span {
+            min-width: 2.4rem;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar', { user, existingUser }) %>
+
+    <div class="staff-panel">
+        <%- include('../partials/staff-navbar', { user, currentPage: 'audit' }) %>
+
+        <div class="content">
+            <section class="section">
+                <div class="level">
+                    <div class="level-left">
+                        <h1 class="title">Audit log</h1>
+                    </div>
+                    <div class="level-right">
+                        <a href="/staff/audit/export" class="button is-info is-light">
+                            <span class="icon is-small"><i class="fas fa-file-csv"></i></span>
+                            <span>Export CSV</span>
+                        </a>
+                    </div>
+                </div>
+                <p class="subtitle">Every privileged action taken in the staff panel and the public API, with the actor, IP and time.</p>
+
+                <form method="GET" action="/staff/audit">
+                    <div class="columns is-vcentered">
+                        <div class="column is-one-third">
+                            <div class="field">
+                                <label class="label" for="q">Action contains</label>
+                                <div class="control">
+                                    <input class="input" id="q" name="action" value="<%= action || '' %>" placeholder="license, ticket, product...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-one-third">
+                            <div class="field">
+                                <label class="label" for="e">Entity</label>
+                                <div class="control">
+                                    <input class="input" id="e" name="entity" value="<%= entity || '' %>" placeholder="license">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column">
+                            <div class="field">
+                                <div class="control">
+                                    <button class="button is-info is-light" type="submit">
+                                        <span class="icon is-small"><i class="fas fa-filter"></i></span>
+                                        <span>Filter</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <% if (!entries.length) { %>
+                    <div class="notification is-warning has-text-centered">Nothing logged yet. Actions appear here as staff use the panel.</div>
+                <% } else { %>
+                    <table class="table is-fullwidth is-striped is-hoverable">
+                        <thead>
+                            <tr>
+                                <th>When</th>
+                                <th>Actor</th>
+                                <th>Action</th>
+                                <th>Entity</th>
+                                <th>Summary</th>
+                                <th>IP</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% entries.forEach(function (e) { %>
+                                <tr>
+                                    <td style="white-space: nowrap;"><%= new Date(e.createdAt).toISOString().replace('T', ' ').slice(0, 19) %></td>
+                                    <td><strong><%= e.actorUsername %></strong></td>
+                                    <td><span class="tag is-info is-light"><%= e.action %></span></td>
+                                    <td><%= e.entity || '—' %></td>
+                                    <td><%= e.summary %></td>
+                                    <td><%= e.ip || '—' %></td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+
+                    <% if (pages > 1) { %>
+                        <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+                            <% for (var p = 1; p <= pages; p++) { %>
+                                <% if (p === page) { %>
+                                    <span class="pagination-current is-info is-light"><%= p %></span>
+                                <% } else { %>
+                                    <a class="pagination-link" href="/staff/audit?page=<%= p %><%= action ? '&action=' + encodeURIComponent(action) : '' %><%= entity ? '&entity=' + encodeURIComponent(entity) : '' %>"><%= p %></a>
+                                <% } %>
+                            <% } %>
+                        </nav>
+                    <% } %>
+                <% } %>
+            </section>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+</body>
+
+</html>

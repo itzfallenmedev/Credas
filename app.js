@@ -2,8 +2,7 @@ const express = require('express');
 const { client } = require("./index.js")
 const path = require('path');
 const fs = require('fs');
-const yaml = require("js-yaml")
-const config = yaml.load(fs.readFileSync('./config.yml', 'utf8'));
+const config = require('./config.js');
 const bodyParser = require('body-parser');
 const packageFile = require('./package.json');
 const axios = require('axios');
@@ -23,6 +22,13 @@ const paymentModel = require('./models/paymentModel')
 const settingsModel = require('./models/settingsModel')
 const CartSnapshot = require('./models/CartSnapshot');
 const statisticsModel = require('./models/statisticsModel')
+const newsletterModel = require('./models/newsletterModel')
+const License = require('./models/licenseModel')
+const Bundle = require('./models/bundleModel')
+const AuditLog = require('./models/auditLogModel')
+const Ticket = require('./models/ticketModel')
+const StatusPage = require('./models/statusPageModel')
+const Translation = require('./models/translationModel')
 const DiscountCodeModel = require('./models/discountCodeModel')
 const markdownIt = require('markdown-it');
 const markdownItContainer = require('markdown-it-container');
@@ -41,14 +47,51 @@ const cache = new NodeCache({ stdTTL: 120 });
 
 const utils = require('./utils.js');
 
-const paypalClientInstance = require('./utils/paypalClient');
+function hexToRgbSafe(hex) {
+  if (!hex) return null;
+  let h = String(hex).replace('#', '').trim();
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  if (h.length !== 6 || /[^0-9a-f]/i.test(h)) return null;
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)].join(', ');
+}
+
+// Payment SDKs throw at construction time when given blank credentials, so
+// each one is only initialised when its Enabled flag is set. This lets the
+// store boot with no payment provider configured at all.
+const paypalEnabled = !!(config.Payments && config.Payments.PayPal && config.Payments.PayPal.Enabled);
+const stripeEnabled = !!(config.Payments && config.Payments.Stripe && config.Payments.Stripe.Enabled);
+const coinbaseEnabled = !!(config.Payments && config.Payments.Coinbase && config.Payments.Coinbase.Enabled);
+
+let paypalClientInstance = null;
+let stripe = null;
+let Charge = null;
+
+// The PayPal SDK is safe to require with blank credentials; only building a
+// client throws, and that is gated below.
 const paypal = require('@paypal/checkout-server-sdk');
 
-const stripe = require('stripe')(config.Payments.Stripe.secretKey);
+// The Coinbase module is safe to require too — only Client.init() rejects an
+// empty key. Webhook is still needed to verify inbound Coinbase webhooks.
+const coinbase = require('coinbase-commerce-node');
 
-const { Client, resources, Webhook } = require('coinbase-commerce-node');
-Client.init(config.Payments.Coinbase.ApiKey);
-const { Charge } = resources;
+if (paypalEnabled) {
+  paypalClientInstance = require('./utils/paypalClient');
+} else {
+  console.warn('[payments] PayPal is disabled — /checkout/paypal is unavailable.');
+}
+
+if (stripeEnabled) {
+  stripe = require('stripe')(config.Payments.Stripe.secretKey);
+} else {
+  console.warn('[payments] Stripe is disabled — /checkout/stripe is unavailable.');
+}
+
+if (coinbaseEnabled) {
+  coinbase.Client.init(config.Payments.Coinbase.ApiKey);
+  Charge = coinbase.resources.Charge;
+} else {
+  console.warn('[payments] Coinbase is disabled — /checkout/coinbase is unavailable.');
+}
 
 const app = express();
 
@@ -141,6 +184,13 @@ createSettings()
 
 if(config?.trustProxy) app.set('trust proxy', 1);
 
+const security = require('./utils/security');
+const audit = require('./utils/audit');
+const licensing = require('./utils/licensing');
+const i18n = require('./utils/i18n');
+
+security.securityHeaders(app);
+
 app.use(session({
   secret: config.secretKey,
   resave: false,
@@ -159,13 +209,37 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(i18n.middleware());
+app.use(bodyParser.urlencoded({ extended: true, limit: '2mb' }));
+app.use(express.json({ limit: '1mb' }));
+app.use('/api', (req, res, next) => {
+  if (config.DebugMode) {
+    let raw = '';
+    req.on('data', function (c) { if (raw.length < 20000) raw += c; });
+    req.on('end', function () { req.rawBody = raw; next(); });
+  } else {
+    req.rawBody = '';
+    next();
+  }
+});
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.json());
 
 let globalSettings = {};
+
+// Cache-bust the design-system assets from their on-disk mtime. Without a
+// version query string browsers keep serving a stale credas.css/credas.js
+// after an edit, which silently breaks page-specific styling.
+const assetVersion = (() => {
+  try {
+    const stamp = p => Math.floor(fs.statSync(p).mtimeMs);
+    return String(Math.max(stamp(path.join(__dirname, 'public/css/credas.css')), stamp(path.join(__dirname, 'public/js/credas.js'))));
+  } catch (e) {
+    return String(Date.now());
+  }
+})();
 
 async function loadSettings(req, res, next) {
   try {
@@ -196,6 +270,21 @@ function hexToRgb(hex) {
 
       res.locals.isStaff = req.isStaff();
 
+      const OWNER_IDS = (config.OwnerID || []).filter(function (id) { return id && id !== 'USER_ID'; });
+      req.isOwner = function () {
+        return !!(req.user && req.user.id && OWNER_IDS.indexOf(String(req.user.id)) > -1);
+      };
+      res.locals.isOwner = req.isOwner();
+      res.locals.ownerIds = OWNER_IDS;
+
+      res.locals.h = function (str) {
+        return String(str == null ? '' : str)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      };
+      res.locals.csrfToken = req.session && req.session.csrfToken;
+      res.locals.assetVersion = assetVersion;
+
       next();
   } catch (err) {
       next(err);
@@ -203,6 +292,42 @@ function hexToRgb(hex) {
 }
 
 app.use(loadSettings);
+
+// Credas maintenance mode — staff always pass through, everyone else gets the notice.
+app.use((req, res, next) => {
+  try {
+    const s = res.locals.settings;
+    if (s && s.maintenanceMode) {
+      const staff = typeof req.isStaff === 'function' && req.isStaff();
+      const allowed = req.path.startsWith('/staff') || req.path.startsWith('/auth') || req.path === '/login' || req.path === '/logout' || req.path.startsWith('/api');
+      if (!staff && !allowed) {
+        return res.status(503).render('maintenance', { user: req.user || null, existingUser: null });
+      }
+    }
+  } catch (e) { /* fail open */ }
+  next();
+});
+
+// Credas newsletter signup — tiny, validated, de-duplicated.
+const newsletterHits = new Map();
+app.post('/newsletter', async (req, res) => {
+  try {
+    const ip = req.ip || req.connection.remoteAddress || 'unknown';
+    const now = Date.now();
+    const last = newsletterHits.get(ip) || 0;
+    if (now - last < 15000) return res.status(429).json({ ok: false });
+    newsletterHits.set(ip, now);
+
+    const email = String((req.body && req.body.email) || '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 160) {
+      return res.status(400).json({ ok: false });
+    }
+    await newsletterModel.updateOne({ email }, { $setOnInsert: { email } }, { upsert: true });
+    res.json({ ok: true });
+  } catch (e) {
+    res.json({ ok: true }); // fail soft — never break the storefront over a signup
+  }
+});
 
 async function checkBan(req, res, next) {
   if (req.isAuthenticated()) {
@@ -287,9 +412,8 @@ app.use((req, res, next) => {
               (function() {
                   const message = \`
 %c
-Plex Store is made by Plex Development.
+Credas — curated digital storefront.
 Version: ${packageFile.version}
-Buy - https://plexdevelopment.net/products/plexstore
 \`,
                   style = \`
 font-family: monospace;
@@ -311,6 +435,31 @@ border: 1px solid #00aaff;
           `;
           // Inject script just before the closing body tag
           body = body.replace('</body>', consoleScript + '</body>');
+
+          // Credas design system — covers pages that still use legacy markup
+          // (staff panel, profile, downloads, payment success).
+          if (body.includes('</head>') && !body.includes('/css/credas.css')) {
+            const s = globalSettings || {};
+            const accent = s.accentColor || '#7b68ee';
+            const bodyFont = s.websiteFont || 'Manrope';
+            const dispFont = s.displayFont || 'Bricolage Grotesque';
+            const rgb = (hexToRgbSafe(accent) || '123, 104, 238');
+            body = body.replace('</head>',
+              `<link rel="preconnect" href="https://fonts.googleapis.com">` +
+              `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>` +
+              `<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">` +
+              `<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">` +
+              `<link rel="stylesheet" href="/css/credas.css?v=${assetVersion}">` +
+              `<style>:root{--accent:${accent};--accent-rgb:${rgb};--body:'${bodyFont}',system-ui,sans-serif;--display:'${dispFont}',system-ui,sans-serif;color-scheme:dark;}</style></head>`);
+            if (/<body[^>]*\bclass="[^"]*"/.test(body)) {
+              body = body.replace(/<body([^>]*)\bclass="([^"]*)"/, (m, before, cls) => `<body${before}class="${cls} crd-legacy"`);
+            } else if (/<body/.test(body)) {
+              body = body.replace(/<body/, '<body class="crd-legacy"');
+            }
+          }
+          if (!body.includes('/js/credas.js')) {
+            body = body.replace('</body>', `<script src="/js/credas.js?v=${assetVersion}" defer></script></body>`);
+          }
       }
       send.call(this, body);
   };
@@ -339,8 +488,8 @@ function generateCsrfToken(req, res, next) {
 }
 
 function csrfProtection(req, res, next) {
-  // Skip CSRF protection for webhook and API routes
-  if (req.path.startsWith('/api') || req.path === '/webhooks/coinbase') {
+  // Skip CSRF protection for webhook, newsletter and API routes
+  if (req.path.startsWith('/api') || req.path === '/webhooks/coinbase' || req.path === '/newsletter') {
       return next();
   }
 
@@ -367,7 +516,20 @@ md.use(markdownItContainer, 'info')
    
 app.locals.md = md;
 
-passport.use(new DiscordStrategy(
+// passport-oauth2 throws at construction when clientID is blank, which would
+// stop the whole store from booting on a fresh install. Register the strategy
+// only once Discord OAuth is configured; login routes explain the situation
+// until then.
+const discordAuthReady = !!(config.clientID && config.clientSecret && config.callbackURL);
+if (!discordAuthReady) {
+  console.warn('');
+  console.warn('[auth] Discord OAuth is not configured — login is disabled.');
+  console.warn('[auth] Set clientID, clientSecret and callbackURL in config.local.yml');
+  console.warn('[auth] (see SETUP.md section 4). The storefront still browses without it.');
+  console.warn('');
+}
+
+if (discordAuthReady) passport.use(new DiscordStrategy(
   {
     clientID: config.clientID,
     clientSecret: config.clientSecret,
@@ -438,12 +600,25 @@ passport.deserializeUser((obj, done) => {
 });
 
 
-app.get("/auth/discord", passport.authenticate("discord"));
-app.get("/auth/discord/callback", passport.authenticate("discord", { failureRedirect: "/" }), (req, res, next) => {
-  res.redirect("/");
+const authUnavailable = (req, res) => res.status(503).send(
+  'Discord login is not configured on this store yet. The shop owner needs to set clientID, clientSecret and callbackURL.'
+);
+
+app.get("/auth/discord", (req, res, next) => {
+  if (!discordAuthReady) return authUnavailable(req, res);
+  passport.authenticate("discord")(req, res, next);
+});
+
+app.get("/auth/discord/callback", (req, res, next) => {
+  if (!discordAuthReady) return authUnavailable(req, res);
+  passport.authenticate("discord", { failureRedirect: "/" })(req, res, (err) => {
+    if (err) return next(err);
+    res.redirect("/");
+  });
 });
 
 app.get('/login', (req, res, next) => {
+  if (!discordAuthReady) return authUnavailable(req, res);
   res.redirect('/auth/discord');
 });
 
@@ -614,7 +789,7 @@ app.get('/', async (req, res, next) => {
     }
     
     // Fetch random reviews
-    const reviews = await reviewModel.aggregate([{ $sample: { size: 3 } }]).exec();
+    const reviews = await reviewModel.aggregate([{ $sample: { size: 8 } }]).exec();
 
     // Fetch Discord user data in parallel with fallbacks
     const reviewsWithDiscordData = await Promise.all(reviews.map(async (review) => {
@@ -674,6 +849,12 @@ app.get('/', async (req, res, next) => {
     const thisMonthStats = yearlyStats?.months[currentMonth] || { totalEarned: 0, totalPurchases: 0, userJoins: 0, totalSiteVisits: 0 };
     const lastMonthStats = previousYearStats?.months[lastMonth] || { totalEarned: 0, totalPurchases: 0, userJoins: 0, totalSiteVisits: 0 };
 
+    const featuredProducts = await productModel
+      .find({ $or: [{ hideProduct: false }, { hideProduct: { $exists: false } }] })
+      .sort({ position: 1 })
+      .limit(6)
+      .lean();
+
     res.render('home', {
       user: req.user || null,
       existingUser,
@@ -682,6 +863,7 @@ app.get('/', async (req, res, next) => {
       lastMonthStats,
       totalUsers,
       totalProducts,
+      featuredProducts,
       reviews: reviewsWithDiscordData,
     });
   } catch (error) {
@@ -1044,6 +1226,7 @@ app.post('/staff/anti-piracy', checkAuthenticated, checkStaffAccess, csrfProtect
     settings.antiPiracyEnabled = req.body.antiPiracyEnabled === 'true';
 
     await settings.save();
+    audit.log(req, 'settings.update', 'settings', null, 'Updated store settings');
 
     utils.sendDiscordLog('Settings Edited', `[${req.user.username}](${config.baseURL}/profile/${req.user.id}) has edited the anti-piracy placeholder settings`);
 
@@ -1165,6 +1348,7 @@ app.post('/staff/products/delete/:id', checkAuthenticated, checkStaffAccess, asy
     const product = await productModel.findById(productId);
     await utils.sendDiscordLog('Product Deleted', `[${req.user.username}](${config.baseURL}/profile/${req.user.id}) has deleted the product \`${product.name}\``);
     await productModel.findByIdAndDelete(productId);
+    audit.log(req, 'product.delete', 'product', productId, 'Deleted product ' + product.name);
 
     await userModel.updateMany(
       { 
@@ -1239,6 +1423,7 @@ app.post('/staff/products/create', checkAuthenticated, checkStaffAccess, upload.
       });
 
       await newProduct.save();
+      audit.log(req, 'product.create', 'product', newProduct._id, 'Created product ' + newProduct.name);
 
       utils.sendDiscordLog('Product Created', `[${req.user.username}](${config.baseURL}/profile/${req.user.id}) has created the product \`${name}\``);
 
@@ -1421,7 +1606,8 @@ app.get('/downloads/:urlId/download/:versionId', checkAuthenticated, async (req,
         USER: req.user.id,
         PRODUCT: product.name,
         NONCE: generatedNonce,
-        PLEXSTORE: 'true'
+        PLEXSTORE: 'true',
+        CREDAS: 'true'
       };
 
       // Find the version to download
@@ -1920,6 +2106,23 @@ app.post('/staff/settings', checkAuthenticated, checkStaffAccess, upload.fields(
     settings.paymentCurrency = req.body.paymentCurrency || settings.paymentCurrency;
     settings.discordLoggingChannel = req.body.discordLoggingChannel || settings.discordLoggingChannel;
 
+    // Credas theme + brand
+    settings.tagline = typeof req.body.tagline !== 'undefined' ? req.body.tagline : settings.tagline;
+    settings.announcementEnabled = req.body.announcementEnabled === 'true';
+    settings.announcementText = typeof req.body.announcementText !== 'undefined' ? req.body.announcementText : settings.announcementText;
+    settings.announcementLink = typeof req.body.announcementLink !== 'undefined' ? req.body.announcementLink : settings.announcementLink;
+    settings.displayFaq = req.body.displayFaq === 'true';
+    settings.newsletterEnabled = req.body.newsletterEnabled === 'true';
+    settings.newsletterEnabled = req.body.newsletterEnabled === 'true';
+    settings.showPaymentBadges = req.body.showPaymentBadges === 'true';
+    settings.wishlistEnabled = req.body.wishlistEnabled === 'true';
+    if (req.body.productGridDensity) settings.productGridDensity = req.body.productGridDensity;
+    settings.displayFont = typeof req.body.displayFont !== 'undefined' && req.body.displayFont ? req.body.displayFont : settings.displayFont;
+    settings.customCSS = typeof req.body.customCSS !== 'undefined' ? req.body.customCSS : settings.customCSS;
+    settings.customJS = typeof req.body.customJS !== 'undefined' ? req.body.customJS : settings.customJS;
+    settings.maintenanceMode = req.body.maintenanceMode === 'true';
+    settings.maintenanceMessage = typeof req.body.maintenanceMessage !== 'undefined' ? req.body.maintenanceMessage : settings.maintenanceMessage;
+
     // Review settings
     settings.sendReviewsToDiscord = req.body.sendReviewsToDiscord === 'true';
     settings.discordReviewChannel = req.body.discordReviewChannel || '';
@@ -2022,33 +2225,77 @@ app.post('/staff/page-customization', checkAuthenticated, checkStaffAccess, csrf
   try {
     let settings = await settingsModel.findOne();
 
+    // Assign text fields only when a non-empty value actually arrived. Assigning
+    // raw req.body values meant a single absent/blank field wrote `undefined`
+    // into a `required: true` path, and Mongoose then rejected the *entire*
+    // save — so one bad field silently discarded every other change.
+    const setText = (key, current) => {
+      const v = req.body[key];
+      return (typeof v === 'string' && v.trim() !== '') ? v : current;
+    };
+
     // Page text customization
-    settings.homePageTitle = req.body.homePageTitle;
-    settings.homePageSubtitle = req.body.homePageSubtitle;
-    settings.productsPageTitle = req.body.productsPageTitle;
-    settings.productsPageSubtitle = req.body.productsPageSubtitle;
-    settings.reviewsPageTitle = req.body.reviewsPageTitle;
-    settings.reviewsPageSubtitle = req.body.reviewsPageSubtitle;
+    settings.homePageTitle = setText('homePageTitle', settings.homePageTitle);
+    settings.homePageSubtitle = setText('homePageSubtitle', settings.homePageSubtitle);
+    settings.productsPageTitle = setText('productsPageTitle', settings.productsPageTitle);
+    settings.productsPageSubtitle = setText('productsPageSubtitle', settings.productsPageSubtitle);
+    settings.reviewsPageTitle = setText('reviewsPageTitle', settings.reviewsPageTitle);
+    settings.reviewsPageSubtitle = setText('reviewsPageSubtitle', settings.reviewsPageSubtitle);
 
-    settings.privacyPolicyPageTitle = req.body.privacyPolicyPageTitle;
-    settings.privacyPolicyPageSubtitle = req.body.privacyPolicyPageSubtitle;
+    settings.privacyPolicyPageTitle = setText('privacyPolicyPageTitle', settings.privacyPolicyPageTitle);
+    settings.privacyPolicyPageSubtitle = setText('privacyPolicyPageSubtitle', settings.privacyPolicyPageSubtitle);
 
-    settings.tosPageTitle = req.body.tosPageTitle;
-    settings.tosPageSubtitle = req.body.tosPageSubtitle;
+    settings.tosPageTitle = setText('tosPageTitle', settings.tosPageTitle);
+    settings.tosPageSubtitle = setText('tosPageSubtitle', settings.tosPageSubtitle);
 
-    settings.websiteFont = req.body.fontSelector;
+    settings.websiteFont = setText('fontSelector', settings.websiteFont);
+    settings.displayFont = setText('displayFont', settings.displayFont);
 
-    settings.customNavTabs = req.body.customNavTabs || [];
-    settings.customFooterTabs =  req.body.customFooterTabs || [];
-    settings.footerDescription = req.body.footerDescription;
+    // These repeaters always render on this page, so an absent key means the
+    // user removed every row. Assign unconditionally so lists can be cleared.
+    settings.customNavTabs = Array.isArray(req.body.customNavTabs)
+      ? req.body.customNavTabs.filter(t => t && t.name && t.link)
+      : [];
+    settings.customFooterTabs = Array.isArray(req.body.customFooterTabs)
+      ? req.body.customFooterTabs.filter(t => t && t.name && t.link)
+      : [];
+    settings.footerDescription = setText('footerDescription', settings.footerDescription);
 
-    if (req.body.features && Array.isArray(req.body.features)) {
-      settings.features = req.body.features.map(feature => ({
-        icon: feature.icon,
-        title: feature.title,
-        description: feature.description
-      }));
+    if (Array.isArray(req.body.socialLinks)) {
+      settings.socialLinks = req.body.socialLinks
+        .filter(s => s && (s.label || s.url))
+        .map(s => ({ label: s.label || 'Link', url: s.url || '#', icon: s.icon || 'fas fa-link' }));
+    } else {
+      settings.socialLinks = [];
     }
+
+    if (Array.isArray(req.body.faqItems)) {
+      settings.faqItems = req.body.faqItems
+        .filter(f => f && (f.question || f.answer))
+        .map(f => ({ question: f.question || '', answer: f.answer || '' }));
+    } else {
+      settings.faqItems = [];
+    }
+
+    if (Array.isArray(req.body.features)) {
+      settings.features = req.body.features
+        .filter(f => f && f.title)
+        .map(feature => ({
+          icon: feature.icon || 'fas fa-bolt',
+          title: feature.title,
+          description: feature.description || ''
+        }));
+    } else {
+      settings.features = [];
+    }
+
+    // Homepage section visibility
+    settings.displayFeatures = req.body.displayFeatures === 'true';
+    settings.displayStats = req.body.displayStats === 'true';
+    settings.displayReviews = req.body.displayReviews === 'true';
+    settings.aboutUsVisible = req.body.aboutUsVisible === 'true';
+    settings.displayFaq = req.body.displayFaq === 'true';
+    settings.displayCTABanner = req.body.displayCTABanner === 'true';
 
     await settings.save();
 
@@ -2498,6 +2745,7 @@ app.post('/checkout/apply-discount', checkAuthenticated, csrfProtection, async (
 
 
 app.post('/checkout/paypal', checkAuthenticated, csrfProtection, async (req, res, next) => {
+  if (!paypalEnabled) return res.status(503).send('PayPal checkout is not enabled on this store.');
   try {
     const user = await userModel.findOne({ discordID: req.user.id }).populate('cart');
     if (!user || !user.cart.length) {
@@ -2679,6 +2927,7 @@ app.post('/checkout/paypal', checkAuthenticated, csrfProtection, async (req, res
 
 
 app.get('/checkout/paypal/capture', checkAuthenticated, async (req, res, next) => {
+  if (!paypalEnabled) return res.status(503).send('PayPal checkout is not enabled on this store.');
   try {
       const { token, snapshot_id } = req.query;
       const request = new paypal.orders.OrdersCaptureRequest(token);
@@ -2783,6 +3032,8 @@ if(config.DebugMode) console.log(`[DEBUG] PayPal Captured Amount: ${paypalCaptur
           const nextPaymentId = paymentCount + 1;
 
           const payment = new paymentModel({
+            publicId: 'ORD-' + security.publicCode(10),
+            tokenSecret: crypto.randomBytes(24).toString('hex'),
             ID: nextPaymentId,
             transactionID: transactionId,
             paymentMethod: "paypal",
@@ -2967,6 +3218,7 @@ if(config.DebugMode) console.log(`[DEBUG] PayPal Captured Amount: ${paypalCaptur
 
 
 app.post('/checkout/stripe', checkAuthenticated, csrfProtection, async (req, res, next) => {
+  if (!stripeEnabled) return res.status(503).send('Stripe checkout is not enabled on this store.');
   try {
     const user = await userModel.findOne({ discordID: req.user.id }).populate('cart');
     if (!user || !user.cart.length) {
@@ -3090,6 +3342,7 @@ app.post('/checkout/stripe', checkAuthenticated, csrfProtection, async (req, res
 
 
 app.get('/checkout/stripe/capture', checkAuthenticated, async (req, res, next) => {
+  if (!stripeEnabled) return res.status(503).send('Stripe checkout is not enabled on this store.');
   try {
       const { session_id } = req.query;
 
@@ -3256,6 +3509,8 @@ if(config.DebugMode) console.log({
       const nextPaymentId = paymentCount + 1;
 
       const payment = new paymentModel({
+            publicId: 'ORD-' + security.publicCode(10),
+            tokenSecret: crypto.randomBytes(24).toString('hex'),
         ID: nextPaymentId,
         transactionID: transactionId,
         paymentMethod: "stripe",
@@ -3358,6 +3613,7 @@ if(config.DebugMode) console.log({
 });
 
 app.post('/checkout/coinbase', checkAuthenticated, csrfProtection, async (req, res, next) => {
+  if (!coinbaseEnabled) return res.status(503).send('Coinbase checkout is not enabled on this store.');
   try {
     const user = await userModel.findOne({ discordID: req.user.id }).populate('cart');
     if (!user || !user.cart.length) {
@@ -3494,7 +3750,7 @@ app.post('/webhooks/coinbase', express.raw({ type: 'application/json' }), async 
 
       // Use Coinbase's built-in signature verification
       try {
-          Webhook.verifySigHeader(rawBody, signature, webhookSecret);
+          coinbase.Webhook.verifySigHeader(rawBody, signature, webhookSecret);
           if (config.DebugMode) console.log('Successfully verified');
       } catch (error) {
           if (config.DebugMode) console.error('Failed to verify signature:', error.message);
@@ -3592,6 +3848,8 @@ app.post('/webhooks/coinbase', express.raw({ type: 'application/json' }), async 
           const nextPaymentId = paymentCount + 1;
 
           const payment = new paymentModel({
+            publicId: 'ORD-' + security.publicCode(10),
+            tokenSecret: crypto.randomBytes(24).toString('hex'),
               ID: nextPaymentId,
               transactionID: transactionId,
               paymentMethod: "coinbase",
@@ -4320,6 +4578,39 @@ if (config.Redirects && Array.isArray(config.Redirects)) {
 }
 
 
+function orderToken(payment) {
+  const secret = (payment && payment.tokenSecret) || config.secretKey;
+  return crypto.createHmac('sha256', secret)
+    .update(String(payment._id) + ':' + String(payment.publicID || payment.publicId || ''))
+    .digest('hex')
+    .slice(0, 32);
+}
+
+require('./routes/platform')({
+  app: app,
+  config: config,
+  models: {
+    Payment: paymentModel,
+    Product: productModel,
+    User: userModel,
+    License: License,
+    Bundle: Bundle,
+    AuditLog: AuditLog,
+    Ticket: Ticket,
+    StatusPage: StatusPage,
+    Translation: Translation
+  },
+  security: security,
+  audit: audit,
+  licensing: licensing,
+  i18n: i18n,
+  csrfProtection: csrfProtection,
+  checkAuthenticated: checkAuthenticated,
+  checkStaffAccess: checkStaffAccess,
+  checkApiKey: checkApiKey,
+  orderToken: orderToken
+});
+
 app.get('/error', (req, res) => {
   const errorMessage = "This is a test error message to verify the error page design.";
   res.status(500).render('error', {
@@ -4353,15 +4644,9 @@ app.listen(config.Port, async () => {
 
   console.log("――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――");
   console.log("                                                                          ");
-  if (config.LicenseKey) console.log(`${color.green.bold.underline(`Plex Store v${packageFile.version} is now Online!`)} (${color.gray(`${config.LicenseKey.slice(0, -10)}`)})`);
-  if (!config.LicenseKey) console.log(`${color.green.bold.underline(`Plex Store v${packageFile.version} is now Online! `)}`);
-  console.log(`• Join our discord server for support, ${color.cyan(`discord.gg/plexdev`)}`);
-  console.log(`• Documentation can be found here, ${color.cyan(`docs.plexdevelopment.net`)}`);
-  console.log(`• By using this product you agree to all terms located here, ${color.yellow(`plexdevelopment.net/tos`)}`);
-  if (config.LicenseKey) console.log("                                                                          ");
-  if (config.LicenseKey) console.log(`${color.green.bold.underline(`Source Code:`)}`);
-  if (config.LicenseKey) console.log(`• You can buy the full source code at ${color.yellow(`plexdevelopment.net/products/pstoresourcecode`)}`);
-  if (config.LicenseKey) console.log(`• Use code ${color.green.bold.underline(`PLEX`)} for 10% OFF!`);
+  if (config.LicenseKey) console.log(`${color.green.bold.underline(`Credas v${packageFile.version} is now Online!`)} (${color.gray(`${config.LicenseKey.slice(0, -10)}`)})`);
+  if (!config.LicenseKey) console.log(`${color.green.bold.underline(`Credas v${packageFile.version} is now Online! `)}`);
+  console.log(`• Web server started on port ${color.cyan(`${config.Port}`)}`);
   console.log("                                                                          ");
   console.log("――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――――");
   console.log(color.yellow("[DASHBOARD] ") + `Web Server has started and is accessible with port ${color.yellow(`${config.Port}`)}`)

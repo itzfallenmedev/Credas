@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<%- include('partials/credas-head', { pageTitle: 'Store closed', pageDesc: settings.maintenanceMessage }) %>
+</head>
+<body>
+<main id="main" style="min-height:100vh;display:grid;align-items:center">
+  <div class="wrap">
+    <div class="state" style="max-width:560px;margin-inline:auto">
+      <span style="display:block;margin:0 auto var(--sp-4);width:fit-content"><%- include('partials/brand-mark', { markClass: 'is-md', markAlt: '' }) %></span>
+      <h2 class="t-h2">The store is closed for maintenance</h2>
+      <p><%= settings.maintenanceMessage %></p>
+      <a class="btn btn-primary" href="<%= settings.discordInviteLink %>">Get updates in the Discord</a>
+    </div>
+  </div>
+</main>
+<script src="/js/credas.js?v=<%= (typeof assetVersion !== 'undefined' ? assetVersion : '1') %>" defer></script>
+</body>
+</html>

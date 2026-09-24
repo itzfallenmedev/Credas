@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<%- include('partials/credas-head', { pageTitle: 'Your licenses', pageDesc: 'Manage your license keys, hardware locks and expiry.' }) %>
+</head>
+<body>
+<%- include('partials/navbar', { user, existingUser, currentPath: '/licenses' }) %>
+
+<main id="main">
+<section class="page-head">
+  <div class="wrap">
+    <p class="crumb"><a href="/">Home</a><span>/</span>Licenses</p>
+    <h1 class="t-h1">Your licenses</h1>
+    <p class="t-lead" style="margin-top:var(--sp-3)">Each key is bound to one device by default. Reset a lock here if you reinstall or change hardware.</p>
+  </div>
+</section>
+
+<section style="padding-bottom:var(--sp-8)">
+  <div class="wrap">
+    <% if (!licenses.length) { %>
+      <div class="state">
+        <i data-lucide="key-round"></i>
+        <h2>No licenses yet</h2>
+        <p>Licenses are issued automatically for products that include one. Buy a licensed product and it will appear here.</p>
+        <a class="btn btn-primary" href="/products">Browse products</a>
+      </div>
+    <% } else { %>
+      <div class="grid-2">
+        <% licenses.forEach(function (l) { %>
+        <% var expired = l.expiresAt && new Date(l.expiresAt) <= new Date(); %>
+        <% var st = expired ? 'expired' : l.status; %>
+        <article class="px-glass" style="padding:var(--sp-5)">
+          <div style="display:flex;align-items:flex-start;gap:var(--sp-3);margin-bottom:var(--sp-3)">
+            <div style="min-width:0">
+              <h2 class="t-h3"><%= l.productName %></h2>
+              <p class="t-sm">Issued <%= new Date(l.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></p>
+            </div>
+            <span class="pill <%= st === 'active' ? 'pill-active' : (st === 'expired' ? 'pill-warn' : 'pill-bad') %>" style="margin-left:auto"><%= st %></span>
+          </div>
+
+          <dl class="kv" style="margin-bottom:var(--sp-4)">
+            <dt>Device lock</dt><dd><%= l.hwid ? (l.maxHwid === 0 ? 'disabled' : 'bound') : 'not bound' %></dd>
+            <dt>Devices</dt><dd><%= l.maxHwid === 0 ? 'unlimited' : l.maxHwid %></dd>
+            <dt>Expires</dt><dd><%= l.expiresAt ? new Date(l.expiresAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'never' %></dd>
+            <dt>Last seen</dt><dd><%= l.lastSeenAt ? new Date(l.lastSeenAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'never' %></dd>
+            <dt>Checks</dt><dd><%= (l.totalChecks || 0).toLocaleString('en-US') %></dd>
+          </dl>
+
+          <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap">
+            <% if (l.hwid) { %>
+            <form action="/licenses/<%= l._id %>/reset-hwid" method="POST" onsubmit="return confirm('Unbind this license from the current device? The next app start will claim it again.')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn btn-ghost btn-sm" type="submit">Reset device lock</button>
+            </form>
+            <% } %>
+            <a class="btn btn-quiet btn-sm" href="/profile/<%= user.id %>">Open in profile</a>
+          </div>
+        </article>
+        <% }); %>
+      </div>
+
+      <div class="px-glass" style="padding:var(--sp-5);margin-top:var(--sp-5)">
+        <h2 class="t-h3">For developers</h2>
+        <p class="t-sm" style="margin:8px 0 var(--sp-3)">Verify a key from your application with a single request. Send the machine ID as <code>hwid</code> and the first call binds the device.</p>
+        <div class="keybox" style="color:var(--ink-2)">POST <%= config.baseURL %>/api/license/verify &nbsp;{ "key": "...", "hwid": "..." }</div>
+      </div>
+    <% } %>
+  </div>
+</section>
+</main>
+
+<%- include('partials/footer') %>
+</body>
+</html>

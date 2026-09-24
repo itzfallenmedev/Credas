@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<%- include('partials/credas-head', { pageTitle: ticket.reference, pageDesc: ticket.subject }) %>
+</head>
+<body>
+<%- include('partials/navbar', { user, existingUser, currentPath: '/tickets' }) %>
+
+<main id="main">
+<section class="page-head">
+  <div class="wrap">
+    <p class="crumb"><a href="/tickets">Support</a><span>/</span><%= ticket.reference %></p>
+    <div style="display:flex;align-items:center;gap:var(--sp-3);flex-wrap:wrap">
+      <h1 class="t-h1" style="margin:0"><%= ticket.subject %></h1>
+      <span class="pill <%= ticket.status === 'resolved' || ticket.status === 'closed' ? 'pill-active' : 'pill-accent' %>"><%= ticket.status %></span>
+    </div>
+    <p class="t-sm" style="margin-top:var(--sp-3)">
+      <%= ticket.category %> · priority <%= ticket.priority %> · opened <%= new Date(ticket.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+      <% if (ticket.productName) { %> · <%= ticket.productName %><% } %>
+    </p>
+  </div>
+</section>
+
+<section style="padding-bottom:var(--sp-8)">
+  <div class="wrap" style="max-width:900px">
+    <% (ticket.messages || []).forEach(function (m) { %>
+    <article class="msg <%= m.authorRole === 'staff' ? 'staff' : '' %>">
+      <div class="msg-head">
+        <b><%= m.authorName %></b>
+        <span class="role"><%= m.authorRole %></span>
+        <time><%= new Date(m.createdAt).toUTCString() %></time>
+      </div>
+      <p><%= m.body %></p>
+    </article>
+    <% }); %>
+
+    <% if (ticket.status !== 'closed' && ticket.status !== 'resolved') { %>
+    <div class="px-glass" style="padding:var(--sp-5);margin-top:var(--sp-4)">
+      <h2 class="t-h3" style="margin-bottom:var(--sp-3)">Reply</h2>
+      <form action="/tickets/<%= ticket._id %>/reply" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="field" style="margin:0">
+          <label for="m" class="sr-only">Your reply</label>
+          <textarea class="textarea" id="m" name="body" required maxlength="8000" placeholder="Write your reply"></textarea>
+        </div>
+        <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;margin-top:var(--sp-3)">
+          <button class="btn btn-primary" type="submit">Send reply</button>
+        </div>
+      </form>
+    </div>
+    <% } %>
+
+    <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;margin-top:var(--sp-4)">
+      <form action="/tickets/<%= ticket._id %>/status" method="POST" onsubmit="return confirm('Close this ticket?')">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="status" value="closed">
+        <button class="btn btn-ghost btn-sm" type="submit"><%= (ticket.status === 'closed' || ticket.status === 'resolved') ? 'Reopen ticket' : 'Close ticket' %></button>
+      </form>
+      <a class="btn btn-quiet btn-sm" href="/tickets">Back to tickets</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<%- include('partials/footer') %>
+</body>
+</html>

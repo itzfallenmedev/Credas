@@ -1,0 +1,8 @@
+<%# Brand lockup — renders the configured logo only. No letter badge behind it:
+       the logo is a transparent PNG wordmark, so any backing layer shows
+       straight through the artwork. %>
+<% var _markClass = typeof markClass !== 'undefined' ? markClass : ''; %>
+<% var _alt = typeof markAlt !== 'undefined' ? markAlt : settings.storeName + ' logo'; %>
+<span class="brand-lockup <%= _markClass %>">
+  <img src="<%= settings.logoPath || '/images/logo.png' %>" alt="<%= _alt %>" onerror="this.remove()">
+</span>

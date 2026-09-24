@@ -1,626 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= product.name %> - <%= settings.storeName %></title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="icon" href="<%= settings.faviconPath %>" type="image/x-icon">
-
-    <meta property="og:title" content="<%= product.name %> | <%= settings.storeName %>" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="<%= settings.baseURL %>" />
-    <meta property="og:image" content="<%= settings.logoPath %>" />
-    <meta property="og:description" content="Explore the features and benefits of our high-quality products, designed to meet your specific needs." />
-    <meta name="theme-color" content="<%= settings.accentColor %>">
-    <meta property="og:site_name" content="<%= settings.storeName %>" />
-    <meta property="og:locale" content="en_US" />
-
-    <style>
-        :root {
-            --primary-color: #0d1117;
-            --secondary-color: <%= settings.accentColor %>;
-            --accent-color: <%= settings.accentColor %>;
-            --accent-color-rgb: <%= accentColorRgb %>;
-            --text-color: #c9d1d9;
-            --title-color: #ffffff;
-            --subtitle-color: #8b949e;
-            --sections-bg-color: #161b22;
-            --sections-subtitle-color: #768390;
-            --footer-bg-color: #161b22;
-            --button-discord-color: #7289da;
-            --price-color: <%= settings.accentColor %>;
-            --button-success-color: #28a745;
-            --note-color: #ffcc00;
-            --note-bg-color: #333333;
-        }
-
-        html {
-            background-color: var(--primary-color);
-            color: var(--text-color);
-        }
-
-        .section {
-            min-height: 50vh;
-            padding-bottom: 50px;
-        }
-
-        .product-banner {
-            background-color: transparent;
-            border-radius: 8px;
-            padding: 15px;
-        }
-
-        .product-title {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    margin-bottom: 20px;
-}
-
-.product-title h1 {
-    font-size: 2rem;
-    font-weight: bold;
-    color: var(--title-color);
-    margin-top: 10px;
-    margin-bottom: 10px;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    word-wrap: break-word;
-    white-space: normal;
-}
-
-        .product-price {
-            font-size: 1.5rem;
-            font-weight: bold;
-            background-color: var(--sections-bg-color);
-            color: var(--price-color);
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
-
-        .product-description {
-            font-size: 1.2rem;
-            color: var(--subtitle-color);
-            margin-top: 20px;
-            line-height: 1.6;
-        }
-
-        .button.is-success {
-            background-color: var(--button-success-color);
-            border-color: var(--button-success-color);
-            color: #fff;
-            transition: filter 0.3s ease;
-        }
-
-        .button.is-success:hover {
-            background-color: var(--button-success-color);
-            filter: brightness(0.9);
-        }
-
-        .button.is-primary {
-            background-color: var(--accent-color);
-            border-color: var(--accent-color);
-            color: #fff;
-            transition: filter 0.3s ease;
-        }
-
-        .button.is-primary:hover {
-            background-color: var(--accent-color);
-            filter: brightness(0.9);
-        }
-
-        .button.is-info {
-            background-color: #17a2b8;
-            border-color: #17a2b8;
-            color: #fff;
-            transition: filter 0.3s ease;
-        }
-
-        .button.is-info:hover {
-            background-color: #17a2b8;
-            filter: brightness(0.9);
-        }
-
-        .additional-info {
-            margin-top: 20px;
-            font-size: 1rem;
-            color: var(--subtitle-color);
-            border-top: 1px solid #2c2f33;
-            padding-top: 20px;
-        }
-
-        .additional-info h3 {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--title-color);
-            margin-bottom: 10px;
-        }
-
-        .markdown-body {
-            font-size: 1rem;
-            line-height: 1.6;
-            color: var(--text-color);
-        }
-
-        .markdown-body h1 {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: var(--title-color);
-            margin-bottom: 1rem;
-        }
-
-        .markdown-body h2 {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--title-color);
-            margin-bottom: 1rem;
-        }
-
-        .markdown-body h3 {
-            font-size: 1.75rem;
-            font-weight: bold;
-            color: var(--title-color);
-            margin-bottom: 1rem;
-        }
-
-        .markdown-body h4 {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--title-color);
-            margin-bottom: 1rem;
-        }
-
-        .markdown-body p {
-            font-size: 1rem;
-            margin-bottom: 1rem;
-            color: var(--text-color);
-        }
-
-        .markdown-body a {
-            color: var(--accent-color);
-            text-decoration: none;
-        }
-
-        .markdown-body a:hover {
-            text-decoration: underline;
-        }
-
-        .markdown-body ul, .markdown-body ol {
-            padding-left: 20px;
-            margin-bottom: 1rem;
-            list-style-type: disc;
-        }
-
-        .markdown-body strong, .markdown-body b {
-            font-weight: bold;
-            color: var(--accent-color);
-        }
-
-        .markdown-body code {
-            background-color: #161b22;
-            padding: 2px 4px;
-            border-radius: 4px;
-            font-family: monospace;
-        }
-
-        .markdown-body pre {
-            background-color: #161b22;
-            padding: 10px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin-bottom: 1rem;
-        }
-
-        .markdown-body blockquote {
-            padding: 10px 20px;
-            margin: 0 0 20px;
-            background-color: #161b22;
-            border-left: 5px solid var(--accent-color);
-        }
-
-        .markdown-body table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 1rem;
-        }
-
-        .markdown-body th, .markdown-body td {
-            padding: 10px;
-            border: 1px solid #c9d1d9;
-        }
-
-        .markdown-body th {
-            background-color: #161b22;
-        }
-
-        .markdown-body td {
-            background-color: var(--primary-color);
-        }
-
-        .markdown-body .info, .markdown-body .success, .markdown-body .warning, .markdown-body .danger {
-            padding: 10px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            color: #fff;
-        }
-
-        .markdown-body .info {
-            background-color: #017acd;
-        }
-
-        .markdown-body .success {
-            background-color: #28a745;
-        }
-
-        .markdown-body .warning {
-            background-color: #d39e00;
-        }
-
-        .markdown-body .danger {
-            background-color: #dc3545;
-        }
-
-        .login-message {
-            font-size: 0.9rem;
-            color: var(--subtitle-color);
-            margin-top: 5px;
-        }
-
-        .note {
-            color: var(--note-color);
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            font-size: 1rem;
-        }
-
-        .button[disabled] {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .button.is-success:disabled {
-            background-color: var(--button-success-color);
-            border-color: var(--button-success-color);
-            color: rgba(255, 255, 255, 0.6);
-            cursor: not-allowed;
-        }
-
-        .button-with-margin {
-        margin-left: 10px; 
-}
-
-        .button-no-margin {
-        margin-left: 0;
-}
-
-.review-box {
-    background: linear-gradient(135deg, var(--primary-color), var(--sections-bg-color));
-    color: var(--text-color);
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    border-radius: var(--border-radius);
-    padding: 25px;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    box-shadow: var(--box-shadow);
-    border: 2px solid var(--accent-color);
-}
-
-.review-box:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-}
-
-.review-box .media-left {
-    margin-right: 15px;
-}
-
-.media-left .image img {
-    border-radius: 50%;
-    width: 64px;
-    height: 64px;
-    object-fit: cover;
-    border: 2px solid var(--accent-color);
-    transition: transform 0.3s ease;
-}
-
-.media-left .image img:hover {
-    transform: scale(1.1);
-}
-
-.review-box .media-content {
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.review-box .media-content .title {
-    font-size: 1.2rem;
-    color: var(--title-color);
-    font-weight: bold;
-}
-
-.review-box .media-content .subtitle {
-    font-size: 1rem;
-    color: var(--subtitle-color);
-}
-
-.review-box .review-date {
-    margin-top: 10px;
-    font-size: 0.9rem;
-    color: var(--subtitle-color);
-    font-style: italic;
-}
-
-.rating {
-    color: var(--accent-color);
-    margin-top: 5px;
-    font-size: 1.2rem;
-}
-
-.has-text-title {
-    color: var(--title-color);
-}
-
-.markdown-body iframe {
-    max-width: 100%;
-    height: auto;
-    aspect-ratio: 16/9;
-    width: 100%;
-    display: block;
-    margin: 0 auto;
-}
-
-
-.buttons {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-}
-
-.button-row {
-    display: flex;
-    flex-wrap: wrap;
-}
-
-.divider {
-    width: 100%;
-    border: 0;
-    border-top: 2px solid var(--sections-subtitle-color);
-    margin: 10px 0;
-}
-
-        .stock-indicator {
-            display: inline-flex;
-            align-items: center;
-            background-color: var(--sections-bg-color);
-            padding: 5px 12px;
-            border-radius: 5px;
-            margin-top: 10px;
-            border: 1px solid var(--accent-color);
-        }
-
-        .stock-indicator .icon {
-            margin-right: 8px;
-            color: var(--accent-color);
-        }
-
-        .stock-indicator .stock-text {
-            color: var(--text-color);
-            font-size: 1.1rem;
-            font-weight: 500;
-        }
-
-        .stock-count {
-            color: var(--accent-color);
-            font-weight: bold;
-            margin-left: 5px;
-        }
-
-        .stock-empty {
-            border-color: #dc3545;
-        }
-
-        .stock-empty .icon,
-        .stock-empty .stock-count {
-            color: #dc3545;
-        }
-
-    </style>
+<%- include('partials/credas-head', { pageTitle: product.name, pageDesc: String(product.description || '').replace(/[#*`>\[\]()!]/g, '').slice(0, 160) }) %>
 </head>
 <body>
-    <%- include('partials/navbar', { user, existingUser }) %>
+<%- include('partials/navbar', { user, existingUser, currentPath: '/products' }) %>
+<% var now = new Date(); %>
+<% var sale = product.onSale && product.saleStartDate && product.saleEndDate && new Date(product.saleStartDate) <= now && now <= new Date(product.saleEndDate); %>
+<% var eff = sale ? product.salePrice : product.price; %>
+<% var off = sale && product.price ? Math.round(((product.price - product.salePrice) / product.price) * 100) : 0; %>
+<% var owned = existingUser && existingUser.ownedProducts && existingUser.ownedProducts.some(function (x) { try { return x.equals(product._id); } catch (e) { return String(x) === String(product._id); } }); %>
+<% var oos = product.productType === 'serials' && (!product.serials || !product.serials.length); %>
+<% var canBuy = user && existingUser && !product.pauseSelling && !oos; %>
 
-    <section class="section">
-        <div class="container">
-            <div class="columns">
-                <div class="column is-half">
-                    <div class="product-banner">
-                        <img src="/<%= product.bannerImage %>" alt="<%= product.name %> Banner" class="image">
-                    </div>
-                    <div class="product-description markdown-body">
-                        <% if (product.description && product.description.trim()) { %>
-                            <%- md.render(product.description) %>
-                        <% } else { %>
-                            <p class="empty-description">No description available for this product.</p>
-                        <% } %>
-                    </div>
-                </div>
-    
-                <div class="column is-half">
-                    <div class="product-title">
-                        <p class="product-price">
-                            <% if (product.onSale && new Date(product.saleStartDate) <= new Date() && new Date() <= new Date(product.saleEndDate)) { %>
-                                <span style="color: var(--price-color); font-weight: bold;">
-                                    <%= settings.currencySymbol %><%= product.salePrice.toFixed(2) %>
-                                </span>
-                                <span style="text-decoration: line-through; font-style: italic; color: var(--subtitle-color); margin-left: 8px;">
-                                    <%= settings.currencySymbol %><%= product.price.toFixed(2) %>
-                                </span>
-                            <% } else if (product.productType === 'digitalFree') { %>
-                                Free
-                            <% } else { %>
-                                <%= settings.currencySymbol %><%= product.price.toFixed(2) %>
-                            <% } %>
-                        </p>
-                        <h1><%= product.name %></h1>
-                        
-                        <% if (product.productType === 'serials') { %>
-                            <div class="stock-indicator <%= product.serials.length === 0 ? 'stock-empty' : '' %>">
-                                <span class="icon">
-                                    <i class="fas fa-key"></i>
-                                </span>
-                                <span class="stock-text">Stock Available:<span class="stock-count"><%= product.serials.length %></span></span>
-                            </div>
-                        <% } %>
-                    </div>
+<main id="main" data-viewed='<%- JSON.stringify({ n: product.name, u: "/products/" + product.urlId, i: "/" + product.bannerImage }).replace(/'/g, "&#39;") %>'>
 
-                    <% if (product.hideProduct) { %>
-                        <div class="note">
-                        This product is currently hidden from the store and public pages.
-                        </div>
-                    <% } %>
+<div class="wrap" style="padding-top:var(--sp-4)">
+  <p class="crumb"><a href="/">Home</a><span>/</span><a href="/products">Products</a><span>/</span><%= product.name %></p>
+</div>
 
-                    <% if (product.pauseSelling) { %>
-                        <div class="note">
-                        This product is temporarily unavailable for purchase as sales are currently paused.
-                        </div>
-                    <% } %>
+<section style="padding-bottom:var(--sp-8)">
+  <div class="wrap">
+    <div class="pdp">
 
-                    <% if (product.productType === 'serials' && product.serials.length === 0) { %>
-                        <div class="note">
-                            This product is currently out of stock and cannot be purchased at this time.
-                        </div>
-                    <% } %>
-
-                    <div class="buttons">
-                        <% const isOwned = existingUser && existingUser.ownedProducts && existingUser.ownedProducts.some(p => p.equals(product._id)); %>
-                        
-                        <div class="button-row">
-                            <% if (isOwned && product.productType === 'service') { %>
-                                <a href="/profile/<%= existingUser.discordID %>" class="button is-link">
-                                    <span class="icon"><i class="fas fa-user-circle"></i></span>
-                                    <span>Go to Profile</span>
-                                </a>
-                                <% } else if ((isOwned || product.productType === 'digitalFree') && 
-                                (product.productType !== 'serials' || (product.productType === 'serials' && product.serialRequiresFile))) { %>
-                      <a href="/downloads/<%= product.urlId %>" class="button is-info">
-                          <span class="icon"><i class="fas fa-download"></i></span>
-                          <span>Download</span>
-                      </a>
-                  <% } %>
-                    
-                        <% if (product.productType !== 'digitalFree') { %>
-                            <% const isLoggedIn = user && existingUser; %>
-                            <% const isOutOfStock = product.productType === 'serials' && product.serials.length === 0; %>
-                            <div class="<%= isOwned && product.productType !== 'serials' ? 'button-with-margin' : 'button-no-margin' %>">
-                                <form action="/cart/add/<%= product._id %>" method="POST" style="display: inline-block;">
-                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                    <button type="submit" class="button is-success" 
-                                    <% if (!isLoggedIn || product.pauseSelling || isOutOfStock) { %>disabled<% } %>>
-                                <span class="icon"><i class="fas fa-cart-plus"></i></span>
-                                <span>Add to Cart</span>
-                            </button>
-                        </form>
-                                <% if (!isLoggedIn) { %>
-                                    <p class="login-message" style="margin-top: 10px;">You must be logged in to add products to your cart.</p>
-                                <% } %>
-                            </div>
-                        <% } %>
-                    
-                        <% if (isStaff && product.productType !== 'serials' && product.productType !== 'service') { %>
-                            <hr class="divider">
-                            <!-- Second row of buttons -->
-                            <div class="button-row">
-                                <a href="/staff/products/update/<%= product._id %>" class="button is-primary">
-                                    <span class="icon"><i class="fas fa-pencil-alt"></i></span>
-                                    <span>Update Product</span>
-                                </a>
-                                <a href="/staff/products/edit/<%= product._id %>" class="button is-info">
-                                    <span class="icon"><i class="fas fa-cog"></i></span>
-                                    <span>Edit Product</span>
-                                </a>
-                            </div>
-                        <% } else if (isStaff) { %>
-                            <hr class="divider">
-                            <!-- Only show Edit Product button for these types -->
-                            <div class="button-row">
-                                <a href="/staff/products/edit/<%= product._id %>" class="button is-info">
-                                    <span class="icon"><i class="fas fa-cog"></i></span>
-                                    <span>Edit Product</span>
-                                </a>
-                            </div>
-                        <% } %>
-                    </div>
-                    
-                    <% if (product.dependencies && product.dependencies.trim()) { %>
-                        <div class="additional-info">
-                            <h3>Dependencies</h3>
-                            <div class="markdown-body">
-                                <%- md.render(product.dependencies) %>
-                            </div>
-                        </div>
-                    <% } %>
-    
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <% if (reviews.length > 0 && settings.displayProductReviews) { %>
-    <section class="reviews-section section" style="margin-top: 50px;">
-        <div class="container">
-            <hr style="border: 0; border-top: 1px solid var(--sections-subtitle-color); margin-bottom: 20px;">
-            <h2 class="title is-4" style="color: var(--title-color);">Reviews for <%= product.name %></h2>
-            <% if (reviews.length > 0) { %>
-                <div class="columns is-multiline">
-                    <% reviews.forEach(review => { %>
-                        <div class="column is-one-third">
-                            <div class="box review-box">
-                                <article class="media">
-                                    <div class="media-left">
-                                        <figure class="image is-64x64">
-                                            <img src="<%= review.discordAvatar %>" alt="<%= review.discordUsername %>'s Avatar">
-                                        </figure>
-                                    </div>
-                                    <div class="media-content">
-                                        <div class="content">
-                                            <p>
-                                                <strong class="has-text-title"><%= review.discordUsername %></strong>
-                                                <br>
-                                                <span class="rating">
-                                                    <% for (let i = 0; i < review.rating; i++) { %>
-                                                        <i class="fas fa-star"></i>
-                                                    <% } %>
-                                                    <% for (let i = review.rating; i < 5; i++) { %>
-                                                        <i class="far fa-star"></i>
-                                                    <% } %>
-                                                </span>
-                                                <br>
-                                                "<%= review.comment %>"
-                                            </p>
-                                        </div>
-                                        <p class="review-date">
-                                            <em><%= new Date(review.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></em>
-                                        </p>
-                                    </div>
-                                </article>
-                            </div>
-                        </div>
-                    <% }) %>
-                </div>
-            <% } else { %>
-                <p class="has-text-centered" style="color: var(--text-color);">No reviews for this product yet.</p>
+      <div>
+        <figure class="pdp-media" style="margin:0">
+          <div class="media">
+            <img src="/<%= product.bannerImage %>" alt="<%= product.name %>">
+            <% if (sale) { %><span class="flag flag-sale" style="position:absolute;top:12px;left:12px">−<%= off %>% off</span><% } %>
+          </div>
+          <figcaption>
+            <span>Product #<%= String(product.position || 0).padStart(3, '0') %></span>
+            <span>Updated <%= product.versions && product.versions.length ? new Date(Math.max.apply(null, product.versions.map(function (v) { return new Date(v.releaseDate).getTime(); }))).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : new Date(product.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+            <% if (settings.wishlistEnabled) { %>
+              <button class="save-btn" style="position:static;margin-left:auto" type="button" data-save="<%= product._id %>" aria-pressed="false" aria-label="Save this product"><i data-lucide="heart"></i></button>
             <% } %>
-        </div>
-    </section>
-    <% } %>
+          </figcaption>
+        </figure>
 
-    <%- include('partials/footer') %>
+        <div class="tabs" style="margin-top:var(--sp-6)">
+          <h2 class="t-h3">Description</h2>
+          <hr class="rule">
+          <div class="prose">
+            <% if (product.description && product.description.trim()) { %><%- md.render(product.description) %><% } else { %><p>No description has been written for this product yet.</p><% } %>
+          </div>
+        </div>
+
+        <% if (product.dependencies && product.dependencies.trim()) { %>
+        <div style="margin-top:var(--sp-6)">
+          <h2 class="t-h3">Requirements</h2>
+          <hr class="rule">
+          <div class="prose"><%- md.render(product.dependencies) %></div>
+        </div>
+        <% } %>
+
+        <% if (product.versions && product.versions.length) { %>
+        <div style="margin-top:var(--sp-6)">
+          <h2 class="t-h3">Changelog</h2>
+          <hr class="rule">
+          <div style="display:grid;gap:var(--sp-3)">
+            <% product.versions.slice().sort(function (a, b) { return new Date(b.releaseDate) - new Date(a.releaseDate); }).forEach(function (v) { %>
+            <div style="display:flex;gap:var(--sp-4);align-items:baseline;padding-bottom:var(--sp-3);border-bottom:1px solid var(--line)">
+              <span class="t-fig" style="color:var(--accent);min-width:72px"><%= v.version %></span>
+              <div style="flex:1">
+                <p class="t-body"><%= v.changelog %></p>
+                <p class="t-sm" style="margin-top:2px"><%= new Date(v.releaseDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %> · <%= (v.downloadCount || 0).toLocaleString('en-US') %> downloads</p>
+              </div>
+            </div>
+            <% }); %>
+          </div>
+        </div>
+        <% } %>
+
+        <% if (reviews && reviews.length && settings.displayProductReviews) { %>
+        <div style="margin-top:var(--sp-7)">
+          <h2 class="t-h3">Reviews for this product</h2>
+          <hr class="rule">
+          <div class="review-grid">
+            <% reviews.slice(0, 4).forEach(function (r) { %>
+            <article class="review">
+              <div class="stars" role="img" aria-label="<%= r.rating %> out of 5">
+                <% for (var s = 1; s <= 5; s++) { %><i data-lucide="star" class="<%= s <= r.rating ? '' : 'off' %>"></i><% } %>
+              </div>
+              <blockquote><%= r.comment %></blockquote>
+              <div class="review-who">
+                <img src="<%= r.discordAvatar %>" alt="" loading="lazy" onerror="this.src='/images/default-avatar.png'">
+                <div><b><%= r.discordUsername %></b><span><%= new Date(r.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span></div>
+              </div>
+            </article>
+            <% }); %>
+          </div>
+        </div>
+        <% } %>
+      </div>
+
+      <div class="buy-box">
+        <% if (product.category) { %><span class="plate-cat"><%= product.category %></span><% } %>
+        <h1 class="t-h1" style="margin-top:var(--sp-2)"><%= product.name %></h1>
+
+        <p class="buy-price <%= sale ? 'is-sale' : '' %>" style="margin-top:var(--sp-4)">
+          <% if (product.productType === 'digitalFree') { %>Free<% } else { %><%= settings.currencySymbol %><%= Number(eff).toFixed(2) %><% if (sale) { %><s><%= settings.currencySymbol %><%= product.price.toFixed(2) %></s><% } %><% } %>
+        </p>
+        <% if (sale) { %><span class="countdown" data-countdown="<%= new Date(product.saleEndDate).toISOString() %>"></span><% } %>
+
+        <% if (product.productType === 'serials') { %>
+          <p style="margin-top:var(--sp-3)">
+            <% if (oos) { %><span class="stock-line out"><span class="dot"></span>Out of stock</span>
+            <% } else { %><span class="stock-line ok"><span class="dot"></span><%= product.serials.length %> keys in stock</span><% } %>
+          </p>
+        <% } %>
+        <% if (product.pauseSelling) { %><p class="note" style="margin-top:var(--sp-3)">Sales are paused for this product right now.</p><% } %>
+        <% if (oos) { %><p class="note note-danger" style="margin-top:var(--sp-3)">No keys left. Restocks are announced in the Discord first.</p><% } %>
+
+        <div class="buy-act">
+          <% if (owned && product.productType === 'service') { %>
+            <a class="btn btn-primary btn-lg btn-block" href="/profile/<%= existingUser.discordID %>">Open your profile</a>
+          <% } else if ((owned || product.productType === 'digitalFree') && (product.productType !== 'serials' || (product.productType === 'serials' && product.serialRequiresFile))) { %>
+            <a class="btn btn-primary btn-lg btn-block" href="/downloads/<%= product.urlId %>"><i data-lucide="download"></i>Download files</a>
+          <% } %>
+          <% if (product.productType !== 'digitalFree') { %>
+            <form action="/cart/add/<%= product._id %>" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="btn btn-<%= canBuy ? 'primary' : 'secondary' %> btn-lg btn-block" type="submit" <%= canBuy ? 'data-add' : 'disabled' %>>
+                <i data-lucide="shopping-bag"></i><span data-add-label><%= canBuy ? 'Add to cart' : (oos ? 'Out of stock' : product.pauseSelling ? 'Sales paused' : 'Sign in to buy') %></span>
+              </button>
+            </form>
+            <% if (!user) { %><a class="btn btn-ghost btn-block" href="/login">Sign in with Discord</a><% } %>
+          <% } %>
+        </div>
+
+        <div class="trust" style="flex-direction:column;gap:10px;border:0;padding:var(--sp-4) 0 0">
+          <span class="trust-item"><i data-lucide="zap"></i>Files unlock the moment payment clears</span>
+          <span class="trust-item"><i data-lucide="refresh-cw"></i>Every future version included</span>
+          <span class="trust-item"><i data-lucide="lock"></i>Payment handled by PayPal, Stripe or Coinbase</span>
+        </div>
+
+        <dl class="spec">
+          <div><dt>Orders</dt><dd><%= (product.totalPurchases || 0).toLocaleString('en-US') %></dd></div>
+          <div><dt>Downloads</dt><dd><%= (product.totalDownloads || 0).toLocaleString('en-US') %></dd></div>
+          <div><dt>Type</dt><dd><%= product.productType === 'digitalFree' ? 'Free' : product.productType === 'digitalPaid' ? 'File' : product.productType === 'serials' ? 'Keys' : 'Service' %></dd></div>
+          <div><dt>Versions</dt><dd><%= product.versions ? product.versions.length : 0 %></dd></div>
+        </dl>
+
+        <% if (typeof isStaff !== 'undefined' && isStaff) { %>
+          <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;margin-top:var(--sp-5);padding-top:var(--sp-4);border-top:1px solid var(--line)">
+            <a class="btn btn-ghost btn-sm" href="/staff/products/update/<%= product._id %>">Push update</a>
+            <a class="btn btn-ghost btn-sm" href="/staff/products/edit/<%= product._id %>">Edit listing</a>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div data-recent-wrap style="margin-top:var(--sp-8)">
+      <h2 class="t-h3" style="margin-bottom:var(--sp-4)">Recently viewed</h2>
+      <div class="plates dense" data-recent></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<%- include('partials/footer') %>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    try {
+      var v = JSON.parse(document.getElementById('main').dataset.viewed);
+      var list = JSON.parse(localStorage.getItem('credas.recent') || '[]').filter(function (x) { return x.u !== v.u; });
+      list.unshift(v);
+      localStorage.setItem('credas.recent', JSON.stringify(list.slice(0, 8)));
+    } catch (e) {}
+  });
+</script>
 </body>
 </html>

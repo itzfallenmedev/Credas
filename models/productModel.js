@@ -34,6 +34,18 @@ const productSchema = new mongoose.Schema({
     totalEarned: { type: Number, default: 0.0, required: true },
     totalDownloads: { type: Number, default: 0, required: true },
     category: { type: String, default: '' },
+    categories: [{ type: String, trim: true, lowercase: true }],
+    tags: [{ type: String, trim: true, lowercase: true }],
+    licensing: {
+      enabled: { type: Boolean, default: false },
+      maxHwid: { type: Number, default: 1, min: 0 },
+      sessionLimit: { type: Number, default: 0, min: 0 },
+      ipLimit: { type: Number, default: 0, min: 0 },
+      durationDays: { type: Number, default: 0, min: 0 }
+    },
+    soldCountWindow: { type: Number, default: 0 },
+    releasedAt: { type: Date, default: null },
+    publishedAt: { type: Date, default: null },
     hideProduct: { type: Boolean, default: false },
     pauseSelling: { type: Boolean, default: false },
     onSale: { type: Boolean, default: false },

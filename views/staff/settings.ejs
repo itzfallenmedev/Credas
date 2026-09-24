@@ -505,6 +505,136 @@
                     </div>
 
                     <div class="card">
+                        <div class="card-title">Theme, type &amp; brand</div>
+
+                        <div class="field">
+                            <label class="label">Tagline (shown under the logo)</label>
+                            <div class="control">
+                                <input class="input" type="text" name="tagline" value="<%= settings.tagline || '' %>" placeholder="Digital goods, no subscription">
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label class="label">Display font (headings)</label>
+                            <div class="control">
+                                <input class="input" type="text" name="displayFont" value="<%= settings.displayFont || 'Bricolage Grotesque' %>" placeholder="Bricolage Grotesque">
+                            </div>
+                            <p class="help is-info">Any Google Font family name. Used for page and product titles only — body text is set under Page Customization.</p>
+                        </div>
+
+                        <div class="field">
+                            <label class="label">Product grid density</label>
+                            <div class="control">
+                                <div class="select">
+                                    <select name="productGridDensity">
+                                        <option value="comfortable" <% if (settings.productGridDensity === 'comfortable') { %>selected<% } %>>Comfortable (3 across)</option>
+                                        <option value="cozy" <% if (settings.productGridDensity === 'cozy') { %>selected<% } %>>Cozy (4 across)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Announcement Bar</div>
+
+                        <div class="field">
+                            <label class="checkbox">
+                                <input type="checkbox" name="announcementEnabled" value="true" <% if (settings.announcementEnabled) { %>checked<% } %> >
+                                Show announcement bar above the header
+                            </label>
+                        </div>
+
+                        <div class="field">
+                            <label class="label">Announcement text</label>
+                            <div class="control">
+                                <input class="input" type="text" name="announcementText" value="<%= settings.announcementText || '' %>" placeholder="Spring sale — 20% off everything this weekend">
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label class="label">Announcement link (optional)</label>
+                            <div class="control">
+                                <input class="input" type="text" name="announcementLink" value="<%= settings.announcementLink || '' %>" placeholder="/products">
+                            </div>
+                            <p class="help is-info">Visitors can dismiss the bar for the rest of their visit.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Shop behaviour &amp; footer</div>
+
+                        <div class="field">
+                            <label class="checkbox">
+                                <input type="checkbox" name="wishlistEnabled" value="true" <% if (settings.wishlistEnabled) { %>checked<% } %> >
+                                Show the save button on product cards
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="checkbox">
+                                <input type="checkbox" name="displayFaq" value="true" <% if (settings.displayFaq) { %>checked<% } %> >
+                                Show FAQ section on the homepage (managed under Page Customization)
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="checkbox">
+                                <input type="checkbox" name="newsletterEnabled" value="true" <% if (settings.newsletterEnabled) { %>checked<% } %> >
+                                Show newsletter signup in the footer
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="checkbox">
+                                <input type="checkbox" name="showPaymentBadges" value="true" <% if (settings.showPaymentBadges) { %>checked<% } %> >
+                                Show payment badges in the footer
+                            </label>
+                        </div>
+
+                        <div class="field">
+                            <label class="label">Newsletter text</label>
+                            <div class="control">
+                                <textarea class="textarea" name="newsletterText" rows="2" placeholder="One email when a product is added."><%= settings.newsletterText || '' %></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Advanced (custom CSS / JS)</div>
+                        <p class="help is-info" style="margin-bottom:10px;">Injected on every storefront page after the Credas stylesheet. Use sparingly — a broken rule here affects the whole shop.</p>
+
+                        <div class="field">
+                            <label class="label">Custom CSS</label>
+                            <div class="control">
+                                <textarea class="textarea" name="customCSS" rows="5" spellcheck="false" placeholder=".crd-h1 { letter-spacing: -0.04em; }"><%= settings.customCSS || '' %></textarea>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label class="label">Custom JS</label>
+                            <div class="control">
+                                <textarea class="textarea" name="customJS" rows="5" spellcheck="false" placeholder="console.log('hello from the shop');"><%= settings.customJS || '' %></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">Maintenance Mode</div>
+
+                        <div class="field">
+                            <label class="checkbox">
+                                <input type="checkbox" name="maintenanceMode" value="true" <% if (settings.maintenanceMode) { %>checked<% } %> >
+                                Take the storefront offline (staff still have full access)
+                            </label>
+                        </div>
+
+                        <div class="field">
+                            <label class="label">Maintenance message</label>
+                            <div class="control">
+                                <input class="input" type="text" name="maintenanceMessage" value="<%= settings.maintenanceMessage || '' %>" placeholder="Credas is restocking the shelves. Check back shortly.">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
                         <div class="card-title">API Settings</div>
                     
                         <div class="field">
@@ -515,7 +645,7 @@
                         </div>
                     
                         <div class="field">
-                            <p class="help is-info">This is a private key and should not be shared with anyone. The API Key is used for making API calls to Plex Store, such as getting information about certain users and checking product ownership. It can be any string you choose, but make sure it is secure (e.g., a long and complex password-like string)
+                            <p class="help is-info">This is a private key and should not be shared with anyone. The API Key is used for making API calls to Credas, such as getting information about certain users and checking product ownership. It can be any string you choose, but make sure it is secure (e.g., a long and complex password-like string)
                             </p>
                             <div class="control">
                                 <input class="input" type="text" name="apiKey" value="<%= settings.apiKey || '' %>" placeholder="Enter API Key">
@@ -523,7 +653,7 @@
                         </div>
                     
                         <div class="field">
-                            <p class="help is-info">You can find documentation on the API in our <a class="api-doc-link" href="https://docs.plexdevelopment.net/plex-store/api" target="_blank">docs page</a>.</p>
+                            <p class="help is-info">API documentation lives with your staff handbook — keep this key private.</p>
                         </div>
                     </div>
 

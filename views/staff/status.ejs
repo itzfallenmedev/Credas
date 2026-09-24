@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Panel | Status Page</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="icon" href="<%= settings.faviconPath %>" type="image/x-icon">
+    <style>
+        :root {
+            --accent-color: <%= settings.accentColor %>;
+            --accent-color-rgb: <%= accentColorRgb %>;
+            --text-color: #c9d1d9;
+            --title-color: #ffffff;
+            --subtitle-color: #8b949e;
+        }
+
+        .staff-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        h1.title {
+            color: var(--title-color) !important;
+        }
+
+        .subtitle {
+            color: var(--subtitle-color);
+        }
+
+        .card-header-title {
+            color: var(--title-color);
+        }
+
+        .component-row {
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .component-row:last-of-type {
+            border-bottom: 0;
+        }
+
+        .incident-row {
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .incident-row:last-of-type {
+            border-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar', { user, existingUser }) %>
+
+    <div class="staff-panel">
+        <%- include('../partials/staff-navbar', { user, currentPage: 'status' }) %>
+
+        <div class="content">
+            <section class="section">
+                <h1 class="title">Status page</h1>
+                <p class="subtitle">This is what visitors see at <a href="/status">/status</a>.</p>
+
+                <div class="columns">
+                    <div class="column is-half">
+                        <div class="card">
+                            <header class="card-header">
+                                <p class="card-header-title">Components</p>
+                            </header>
+                            <div class="card-content">
+                                <% (page.components || []).forEach(function (c) { %>
+                                    <form action="/staff/status/component" method="POST" class="component-row">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <input type="hidden" name="key" value="<%= c.key %>">
+                                        <div class="columns is-vcentered is-variable is-2">
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label" for="n-<%= c.key %>">Name</label>
+                                                    <div class="control">
+                                                        <input class="input" id="n-<%= c.key %>" name="name" value="<%= c.name %>">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="column is-one-third">
+                                                <div class="field">
+                                                    <label class="label" for="s-<%= c.key %>">State</label>
+                                                    <div class="control">
+                                                        <div class="select is-fullwidth">
+                                                            <select id="s-<%= c.key %>" name="state">
+                                                                <% ['operational','degraded','partial','down'].forEach(function (s) { %><option value="<%= s %>" <%= c.state === s ? 'selected' : '' %>><%= s %></option><% }); %>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="column is-narrow">
+                                                <div class="field">
+                                                    <div class="control">
+                                                        <button class="button is-info is-light is-small" type="submit">Save</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+                                <% }); %>
+
+                                <form action="/staff/status/component" method="POST">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <p class="title is-6">Add component</p>
+                                    <div class="columns is-variable is-2">
+                                        <div class="column">
+                                            <div class="field">
+                                                <label class="label" for="ak">Key</label>
+                                                <div class="control">
+                                                    <input class="input" id="ak" name="key" required placeholder="gateway">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="column">
+                                            <div class="field">
+                                                <label class="label" for="an">Name</label>
+                                                <div class="control">
+                                                    <input class="input" id="an" name="name" required placeholder="Gateway">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label" for="ad">Description</label>
+                                        <div class="control">
+                                            <input class="input" id="ad" name="description" placeholder="What this covers">
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <div class="control">
+                                            <button class="button is-info" type="submit">
+                                                <span class="icon is-small"><i class="fas fa-plus"></i></span>
+                                                <span>Add component</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="column is-half">
+                        <div class="card">
+                            <header class="card-header">
+                                <p class="card-header-title">Open an incident</p>
+                            </header>
+                            <div class="card-content">
+                                <form action="/staff/status/incident" method="POST">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <div class="field">
+                                        <label class="label" for="it">Title</label>
+                                        <div class="control">
+                                            <input class="input" id="it" name="title" required maxlength="160" placeholder="Elevated error rates on checkout">
+                                        </div>
+                                    </div>
+                                    <div class="columns is-variable is-2">
+                                        <div class="column">
+                                            <div class="field">
+                                                <label class="label" for="is">Status</label>
+                                                <div class="control">
+                                                    <div class="select is-fullwidth">
+                                                        <select id="is" name="status">
+                                                            <option value="investigating">Investigating</option>
+                                                            <option value="identified">Identified</option>
+                                                            <option value="monitoring">Monitoring</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="column">
+                                            <div class="field">
+                                                <label class="label" for="ii">Impact</label>
+                                                <div class="control">
+                                                    <div class="select is-fullwidth">
+                                                        <select id="ii" name="impact">
+                                                            <option value="minor">Minor</option>
+                                                            <option value="major">Major</option>
+                                                            <option value="critical">Critical</option>
+                                                            <option value="none">None</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label" for="ib">What is affected</label>
+                                        <div class="control">
+                                            <textarea class="textarea" id="ib" name="body" rows="3" maxlength="2000"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label" for="iu">First update</label>
+                                        <div class="control">
+                                            <textarea class="textarea" id="iu" name="updateBody" rows="2" maxlength="2000" placeholder="What we know so far"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="field">
+                                        <div class="control">
+                                            <button class="button is-info" type="submit">
+                                                <span class="icon is-small"><i class="fas fa-bullhorn"></i></span>
+                                                <span>Publish incident</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <header class="card-header">
+                                <p class="card-header-title">Ongoing incidents</p>
+                            </header>
+                            <div class="card-content">
+                                <% var ongoing = (page.incidents || []).filter(function (i) { return i.status !== 'resolved'; }); %>
+                                <% if (!ongoing.length) { %>
+                                    <p class="subtitle is-6">No open incidents.</p>
+                                <% } %>
+                                <% ongoing.forEach(function (i) { %>
+                                    <form action="/staff/status/incident/<%= i._id %>/update" method="POST" class="incident-row">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <p class="has-text-weight-semibold"><%= i.title %></p>
+                                        <div class="field is-grouped">
+                                            <div class="control is-narrow">
+                                                <div class="select">
+                                                    <select name="status">
+                                                        <option value="investigating" <%= i.status === 'investigating' ? 'selected' : '' %>>Investigating</option>
+                                                        <option value="identified" <%= i.status === 'identified' ? 'selected' : '' %>>Identified</option>
+                                                        <option value="monitoring" <%= i.status === 'monitoring' ? 'selected' : '' %>>Monitoring</option>
+                                                        <option value="resolved" <%= i.status === 'resolved' ? 'selected' : '' %>>Resolved</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="control">
+                                                <input class="input" name="body" placeholder="Update text" required>
+                                            </div>
+                                            <div class="control">
+                                                <button class="button is-info is-light is-small" type="submit">Post</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+</body>
+
+</html>

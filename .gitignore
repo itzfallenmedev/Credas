@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Local configuration and secrets — never commit
+config.local.yml
+.env
+.env.*
+
+# Runtime data
+logs.txt
+*.log
+npm-debug.log*
+
+# Uploaded product files and buyer content
+uploads/*
+!uploads/.gitkeep
+
+# Logs and diagnostics
+*.pid
+*.seed
+npm-debug.log*
+logs/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

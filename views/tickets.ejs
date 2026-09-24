@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<%- include('partials/credas-head', { pageTitle: 'Support tickets', pageDesc: 'Open a ticket and track replies from staff.' }) %>
+</head>
+<body>
+<%- include('partials/navbar', { user, existingUser, currentPath: '/tickets' }) %>
+
+<main id="main">
+<section class="page-head">
+  <div class="wrap">
+    <p class="crumb"><a href="/">Home</a><span>/</span>Support</p>
+    <h1 class="t-h1">Support tickets</h1>
+    <p class="t-lead" style="margin-top:var(--sp-3)">Every reply stays in one thread, so nothing gets lost in chat history.</p>
+  </div>
+</section>
+
+<section style="padding-bottom:var(--sp-8)">
+  <div class="wrap">
+
+    <div class="px-glass" style="padding:clamp(20px,3vw,30px);margin-bottom:var(--sp-5)">
+      <h2 class="t-h3" style="margin-bottom:var(--sp-4)">Open a ticket</h2>
+      <% if (typeof query !== 'undefined' && query && query.error === 'empty') { %>
+        <p class="note note-danger" style="margin-bottom:var(--sp-4)">A subject and a description are both required.</p>
+      <% } %>
+      <form action="/tickets" method="POST">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="grid-2">
+          <div class="field" style="margin:0">
+            <label for="s">Subject</label>
+            <input class="input" id="s" name="subject" required maxlength="200" placeholder="Short summary of the problem">
+          </div>
+          <div class="field" style="margin:0">
+            <label for="c">Category</label>
+            <select class="select" id="c" name="category">
+              <option value="technical">Technical problem</option>
+              <option value="billing">Billing or payment</option>
+              <option value="account">Account access</option>
+              <option value="feature-request">Feature request</option>
+              <option value="other">Something else</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top:var(--sp-4)">
+          <div class="field" style="margin:0">
+            <label for="p">Priority</label>
+            <select class="select" id="p" name="priority">
+              <option value="low">Low — no rush</option>
+              <option value="normal" selected>Normal</option>
+              <option value="high">High — blocking me</option>
+              <option value="urgent">Urgent — product unusable</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="o">Order reference (optional)</label>
+            <input class="input" id="o" name="orderID" placeholder="ORD-XXXXXXXXXX" style="font-family:var(--figure)">
+          </div>
+        </div>
+        <div class="field" style="margin-top:var(--sp-4)">
+          <label for="b">What happened?</label>
+          <textarea class="textarea" id="b" name="body" required maxlength="8000" placeholder="Steps to reproduce, what you expected, and what actually happened. Include any error text exactly as shown."></textarea>
+        </div>
+        <button class="btn btn-primary" type="submit">Create ticket</button>
+      </form>
+    </div>
+
+    <h2 class="t-h3" style="margin-bottom:var(--sp-3)">Your tickets</h2>
+    <% if (!tickets.length) { %>
+      <div class="state"><i data-lucide="inbox"></i><h2>No tickets yet</h2><p>Anything you open above will be listed here with its latest status.</p></div>
+    <% } else { %>
+      <div class="table-wrap">
+        <table class="dtable">
+          <thead><tr><th>Reference</th><th>Subject</th><th>Priority</th><th>Status</th><th>Last reply</th></tr></thead>
+          <tbody>
+            <% tickets.forEach(function (t) { %>
+            <tr>
+              <td><b><a href="/tickets/<%= t._id %>"><%= t.reference %></a></b></td>
+              <td><%= t.subject %></td>
+              <td><span class="pill <%= t.priority === 'urgent' || t.priority === 'high' ? 'pill-warn' : '' %>"><%= t.priority %></span></td>
+              <td><span class="pill <%= t.status === 'resolved' || t.status === 'closed' ? 'pill-active' : 'pill-accent' %>"><%= t.status %></span></td>
+              <td><%= new Date(t.lastReplyAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </div>
+</section>
+</main>
+
+<%- include('partials/footer') %>
+</body>
+</html>

@@ -1,6 +1,5 @@
 const fs = require('fs');
-const yaml = require("js-yaml")
-const config = yaml.load(fs.readFileSync('./config.yml', 'utf8'));
+const config = require('./config.js');
 const axios = require('axios');
 const color = require('ansi-colors');
 const botVersion = require('./package.json');
@@ -10,7 +9,7 @@ console.log(`${color.yellow(`Starting product, this can take a while..`)}`)
 
 const version = Number(process.version.split('.')[0].replace('v', ''));
 if (version < 18) {
-  console.log(`${color.red(`[ERROR] Plex Store requires a NodeJS version of 18 or higher!\nYou can check your NodeJS by running the "node -v" command in your terminal.`)}`);
+  console.log(`${color.red(`[ERROR] Credas requires a NodeJS version of 18 or higher!\nYou can check your NodeJS by running the "node -v" command in your terminal.`)}`);
 
   // Add update instructions
   console.log(`${color.blue(`\n[INFO] To update Node.js, follow the instructions below for your operating system:`)}`);
@@ -22,7 +21,7 @@ if (version < 18) {
   console.log(`${color.cyan(`  - sudo yum update`)}`);
   console.log(`${color.cyan(`  - sudo yum install -y nodejs`)}`);
 
-  let logMsg = `\n\n[${new Date().toLocaleString()}] [ERROR] Plex Store requires a NodeJS version of 18 or higher!`;
+  let logMsg = `\n\n[${new Date().toLocaleString()}] [ERROR] Credas requires a NodeJS version of 18 or higher!`;
   fs.appendFile("./logs.txt", logMsg, (e) => { 
     if(e) console.log(e);
   });
@@ -211,7 +210,9 @@ if (config.DebugMode) {
 
 
   client.login(config.Token).catch(error => {
-    if (error.message.includes("Used disallowed intents")) {
+    if (!config.Token) {
+      console.warn('\x1b[33m%s\x1b[0m', '[bot] No Discord bot token configured — logging, role grants and auto-join are disabled. The store works without it (see SETUP.md section 4).');
+    } else if (error.message.includes("Used disallowed intents")) {
       console.log('\x1b[31m%s\x1b[0m', `Used disallowed intents (READ HOW TO FIX): \n\nYou did not enable Privileged Gateway Intents in the Discord Developer Portal!\nTo fix this, you have to enable all the privileged gateway intents in your discord developer portal, you can do this by opening the discord developer portal, go to your application, click on bot on the left side, scroll down and enable Presence Intent, Server Members Intent, and Message Content Intent`);
       //process.exit();
     } else if (error.message.includes("An invalid token was provided")) {

@@ -1,6 +1,5 @@
 const fs = require('fs');
-const yaml = require("js-yaml")
-const config = yaml.load(fs.readFileSync('./config.yml', 'utf8'));
+const config = require('./config.js');
 const axios = require('axios');
 const color = require('ansi-colors');
 const settingsModel = require('./models/settingsModel')

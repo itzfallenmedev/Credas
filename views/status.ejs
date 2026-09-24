@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en" dir="<%= typeof dir !== 'undefined' ? dir : 'ltr' %>" data-theme="dark">
+<head>
+<%- include('partials/credas-head', { pageTitle: 'Service status', pageDesc: 'Live availability for the store, API, payments and downloads.' }) %>
+</head>
+<body>
+<%- include('partials/navbar', { user, existingUser, currentPath: '/status' }) %>
+
+<main id="main">
+<section class="page-head">
+  <div class="wrap">
+    <p class="crumb"><a href="/">Home</a><span>/</span>Status</p>
+    <h1 class="t-h1">Service status</h1>
+    <p class="t-lead" style="margin-top:var(--sp-3)">Live availability for the storefront, API, payments and file delivery.</p>
+  </div>
+</section>
+
+<section style="padding-bottom:var(--sp-8)">
+  <div class="wrap">
+
+    <div class="banner-status <%= overall === 'All systems operational' ? '' : 'bad' %>">
+      <span class="svc-dot <%= overall === 'All systems operational' ? 'svc-operational' : 'svc-degraded' %>"></span>
+      <b><%= overall %></b>
+      <span class="t-sm" style="margin-left:auto">Updated <%= new Date(page.updatedAt || Date.now()).toUTCString() %></span>
+    </div>
+
+    <h2 class="t-h3" style="margin-bottom:var(--sp-3)">Components</h2>
+    <div class="grid-2" style="margin-bottom:var(--sp-7)">
+      <% (page.components || []).forEach(function (c) { %>
+      <div class="svc">
+        <span class="svc-dot svc-<%= c.state %>"></span>
+        <div>
+          <b><%= c.name %></b>
+          <span><%= c.description || '' %></span>
+        </div>
+        <span class="uptime"><%= c.state %></span>
+      </div>
+      <% }); %>
+    </div>
+
+    <h2 class="t-h3" style="margin-bottom:var(--sp-3)">Incidents</h2>
+    <% if (!openIncidents.length) { %>
+      <div class="banner-status">
+        <span class="svc-dot svc-operational"></span>
+        <b>No open incidents</b>
+      </div>
+    <% } %>
+
+    <% openIncidents.forEach(function (i) { %>
+    <article class="incident">
+      <h3><%= i.title %></h3>
+      <p class="t-sm" style="margin-top:4px">
+        <span class="pill pill-warn"><%= i.status %></span>
+        <span class="pill"><%= i.impact %> impact</span>
+        <time>Opened <%= new Date(i.createdAt).toUTCString() %></time>
+      </p>
+      <% if (i.body) { %><p class="t-body" style="margin-top:var(--sp-3)"><%= i.body %></p><% } %>
+      <div class="updates">
+        <% (i.updates || []).slice().reverse().forEach(function (u) { %>
+        <div>
+          <time><%= u.status %> · <%= new Date(u.createdAt).toUTCString() %></time>
+          <p><%= u.body %></p>
+        </div>
+        <% }); %>
+      </div>
+    </article>
+    <% }); %>
+
+    <% var past = (page.incidents || []).filter(function (i) { return i.status === 'resolved'; }).slice(0, 10); %>
+    <% if (past.length) { %>
+    <details style="margin-top:var(--sp-4)">
+      <summary class="t-sm" style="cursor:pointer;color:var(--muted)">Past incidents (<%= past.length %>)</summary>
+      <div style="margin-top:var(--sp-3)">
+        <% past.forEach(function (i) { %>
+        <article class="incident resolved">
+          <h3><%= i.title %></h3>
+          <p class="t-sm" style="margin-top:4px">Resolved <%= new Date(i.resolvedAt || i.createdAt).toUTCString() %></p>
+        </article>
+        <% }); %>
+      </div>
+    </details>
+    <% } %>
+  </div>
+</section>
+</main>
+
+<%- include('partials/footer') %>
+</body>
+</html>

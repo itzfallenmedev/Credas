@@ -1,0 +1,28 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= typeof pageTitle !== 'undefined' && pageTitle ? pageTitle + ' — ' + settings.storeName : settings.seoTitle %></title>
+<meta name="description" content="<%= typeof pageDesc !== 'undefined' && pageDesc ? pageDesc : settings.seoDescription %>">
+<link rel="icon" href="<%= settings.faviconPath %>" type="image/x-icon">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:title" content="<%= typeof pageTitle !== 'undefined' && pageTitle ? pageTitle + ' — ' + settings.storeName : settings.seoTitle %>">
+<meta property="og:description" content="<%= typeof pageDesc !== 'undefined' && pageDesc ? pageDesc : settings.seoDescription %>">
+<meta property="og:image" content="<%= settings.logoPath %>">
+<meta property="og:site_name" content="<%= settings.storeName %>">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="/css/credas.css?v=<%= (typeof assetVersion !== 'undefined' ? assetVersion : '1') %>">
+
+<style>
+  :root {
+    --accent: <%= settings.accentColor || '#7b68ee' %>;
+    --accent-rgb: <%= accentColorRgb %>;
+    --display: "<%= settings.displayFont || 'Bricolage Grotesque' %>", system-ui, sans-serif;
+    --body: "<%= settings.websiteFont || 'Manrope' %>", system-ui, sans-serif;
+  }
+</style>
+<script>document.documentElement.classList.add('js');</script>
+<% if (settings.customCSS && settings.customCSS.trim()) { %><style><%= settings.customCSS %></style><% } %>

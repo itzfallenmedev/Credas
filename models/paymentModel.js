@@ -20,7 +20,13 @@ const paymentSchema = new mongoose.Schema({
     originalSubtotal: { type: Number, required: true },
     salesTaxAmount: { type: Number, required: true },
     discountAmount: { type: Number, required: true },
-    totalPaid: { type: Number, required: true }, 
+    totalPaid: { type: Number, required: true },
+    publicId: { type: String, default: null, unique: true, sparse: true, index: true },
+    tokenSecret: { type: String, default: null },
+    status: { type: String, enum: ['paid', 'refunded', 'partially_refunded', 'disputed', 'failed'], default: 'paid' },
+    refundedAmount: { type: Number, default: 0 },
+    refundedAt: { type: Date, default: null },
+    refundReason: { type: String, default: '' },
     createdAt: { type: Date, default: Date.now }
 });
 

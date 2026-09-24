@@ -1,529 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Products - <%= settings.storeName %>
-    </title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="icon" href="<%= settings.faviconPath %>" type="image/x-icon">
-
-    <meta property="og:title" content="Products | <%= settings.storeName %>" />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="<%= settings.baseURL %>" />
-    <meta property="og:image" content="<%= settings.logoPath %>" />
-    <meta property="og:description"
-        content="Browse our diverse range of high-quality, easy-to-use products tailored to enhance your experience." />
-    <meta name="theme-color" content="<%= settings.accentColor %>">
-    <meta property="og:site_name" content="<%= settings.storeName %>" />
-    <meta property="og:locale" content="en_US" />
-
-    <style>
-        :root {
-            --primary-color: #0d1117;
-            --secondary-color: <%=settings.accentColor %>;
-            --accent-color: <%=settings.accentColor %>;
-            --accent-color-rgb: <%= accentColorRgb %>;
-            --text-color: #c9d1d9;
-            --title-color: #ffffff;
-            --subtitle-color: #8b949e;
-            --sections-bg-color: #161b22;
-            --sections-subtitle-color: #768390;
-            --footer-bg-color: #161b22;
-            --button-discord-color: #7289da;
-            --price-color: <%=settings.accentColor %>;
-        }
-
-        html {
-            background-color: var(--primary-color);
-            color: var(--text-color);
-        }
-
-        .hero.is-medium {
-            position: relative;
-            background: url('<%= settings.backgroundImagePath %>') no-repeat center center fixed;
-            background-size: cover;
-            border-bottom: 2px solid <%= settings.accentColor %>;
-            z-index: 1;
-            min-height: 80vh;
-        }
-
-        .hero-body {
-            padding-top: 2rem !important;
-            padding-bottom: 2rem !important;
-            position: relative;
-            align-items: center;
-            display: flex;
-            z-index: 2;
-        }
-
-        .hero.is-medium {
-            min-height: 40vh;
-        }
-
-        .hero-body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            left: 0;
-            background: rgba(0, 0, 0, 0.2);
-            z-index: -1;
-            filter: blur(3px);
-        }
-
-        .title.is-spaced {
-            color: var(--title-color);
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        .subtitle {
-            color: var(--subtitle-color);
-            max-width: 700px;
-            margin: 0 auto;
-            line-height: 1.5;
-        }
-
-        .button.is-info {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-            color: var(--primary-color);
-            font-weight: bold;
-            border-radius: 8px;
-            padding: 10px 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .button.is-info:hover,
-        .button.is-info:focus {
-            background-color: var(--accent-color);
-            border-color: var(--accent-color);
-            color: var(--primary-color);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            transform: translateY(-2px);
-        }
-
-
-        .button .icon {
-            margin-right: 5px;
-            color: var(--primary-color);
-        }
-
-        .button.is-success {
-            background-color: #2ecc71;
-            border-color: #27ae60;
-            color: var(--primary-color);
-            font-weight: bold;
-            border-radius: 8px;
-            padding: 10px 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .button.is-success:hover,
-        .button.is-success:focus {
-            background-color: #27ae60;
-            border-color: #2ecc71;
-            color: var(--primary-color);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            transform: translateY(-2px);
-        }
-
-        .button.is-store {
-            background-color: transparent;
-            border: 2px solid var(--text-color);
-            color: var(--text-color);
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        .button.is-store:hover {
-            background-color: var(--text-color);
-            color: var(--primary-color);
-        }
-
-        .section {
-            min-height: 60vh;
-        }
-
-        .section-title {
-            color: var(--title-color);
-            position: relative;
-        }
-
-        .section-title-underline::after {
-            content: '';
-            display: block;
-            width: 50px;
-            height: 4px;
-            background-color: var(--accent-color);
-            margin: 10px auto 0;
-        }
-
-        .product-list {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 30px;
-            margin-top: 2px;
-        }
-
-        .product-card {
-    background-color: var(--sections-bg-color);
-    border-radius: 16px;
-    padding: 20px;
-    width: 400px;
-    text-align: center;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    position: relative;
-    overflow: hidden;
-    backdrop-filter: blur(10px);
-}
-
-.product-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-    border: 1px solid var(--accent-color);
-}
-
-.product-card .product-banner {
-    position: relative;
-    width: 100%;
-    height: 200px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-        .product-card .product-banner img {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .product-card:hover .product-banner img {
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .product-card img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: cover;
-            border-radius: 8px;
-            background-color: transparent;
-        }
-
-        .product-card .product-info {
-    padding: 8px 0;
-}
-
-.product-card .product-name {
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: var(--title-color);
-    margin-bottom: 12px;
-    transition: color 0.3s ease;
-}
-
-.product-card:hover .product-name {
-    color: var(--accent-color);
-}
-
-        .product-card .product-description {
-            font-size: 0.9rem;
-            color: var(--subtitle-color);
-            margin-bottom: 15px;
-        }
-
-        .product-card .product-price {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: var(--price-color);
-    padding: 8px 16px;
-    background-color: rgba(var(--accent-color-rgb), 0.1);
-    border-radius: 12px;
-    border: 1px solid rgba(var(--accent-color-rgb), 0.15);
-    display: inline-block;
-    margin: 8px auto 16px;
-    transition: all 0.3s ease;
-}
-
-.product-card:hover .product-price {
-    background-color: rgba(var(--accent-color-rgb), 0.15);
-    border-color: rgba(var(--accent-color-rgb), 0.25);
-}
-
-.product-card .buttons {
-    opacity: 0.9;
-    transition: opacity 0.3s ease;
-}
-
-.product-card:hover .buttons {
-    opacity: 1;
-}
-
-
-.product-card .button {
-    border-radius: 12px;
-    padding: 12px 20px;
-    font-weight: 600;
-    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-}
-
-        .buttons.is-centered {
-            justify-content: center;
-            margin-top: 15px;
-        }
-
-        .product-card .product-badge {
-            background-color: var(--accent-color);
-            color: var(--primary-color);
-            padding: 7px 12px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            border-radius: 3px;
-            z-index: 1;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        }
-
-        .search-bar {
-            width: 60%;
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: var(--sections-bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--accent-color) !important;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .search-bar::placeholder {
-            color: #a9a9a9;
-            opacity: 1;
-        }
-
-        .categories-list {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
-
-        .categories-list .button.is-store {
-            background-color: var(--sections-bg-color);
-            color: var(--text-color);
-            border: 1px solid var(--accent-color);
-            border-radius: 8px;
-            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-            padding: 10px 15px;
-        }
-
-        .categories-list .button.is-store:hover {
-            background-color: var(--accent-color);
-            color: var(--primary-color);
-        }
-
-        .product-card.on-sale {
-            border: 2px solid var(--accent-color);
-            position: relative;
-        }
-
-        .product-card .product-badge-sale {
-    background: linear-gradient(135deg,
-            rgba(var(--accent-color-rgb), 1) 0%,
-            rgba(var(--accent-color-rgb), 0.9) 100%);
-    color: var(--primary-color);
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    position: absolute;
-    top: 24px;
-    right: 24px;
-    border-radius: 8px;
-    z-index: 2;
-    box-shadow: 0 4px 12px rgba(var(--accent-color-rgb), 0.3);
-    animation: glow 2s infinite ease-in-out;
-}
-
-@keyframes glow {
-    0%, 100% {
-        box-shadow: 0 4px 12px rgba(var(--accent-color-rgb), 0.3);
-    }
-    50% {
-        box-shadow: 0 4px 20px rgba(var(--accent-color-rgb), 0.6);
-    }
-}
-    </style>
-
+<%- include('partials/credas-head', { pageTitle: settings.productsPageTitle, pageDesc: settings.productsPageSubtitle }) %>
 </head>
-
 <body>
-    <%- include('partials/navbar', { user, existingUser }) %>
+<%- include('partials/navbar', { user, existingUser, currentPath: '/products' }) %>
 
-    <section class="hero is-medium is-fullheight-with-navbar" style="
-    <% if (typeof settings.backgroundGradient === 'undefined' || settings.backgroundGradient) { %>
-        background: linear-gradient(
-            180deg,
-            rgba(var(--accent-color-rgb), 0.6) 0%, 
-            rgba(var(--accent-color-rgb), 0.4) 40%, 
-            rgba(var(--accent-color-rgb), 0.3) 80%, 
-            rgba(var(--accent-color-rgb), 0.2) 100%
-        );
-    <% } else { %>
-        background: url('<%= settings.backgroundImagePath %>') no-repeat center center fixed;
-        background-size: cover;
+<main id="main">
+<section class="page-head">
+  <div class="wrap">
+    <p class="crumb"><a href="/">Home</a><span>/</span>Products</p>
+    <h1 class="t-h1"><%= settings.productsPageTitle %></h1>
+    <p class="t-lead" style="margin-top:var(--sp-3)"><%= settings.productsPageSubtitle %></p>
+  </div>
+</section>
+
+<section class="section" style="padding-top:var(--sp-5)">
+  <div class="wrap">
+
+    <% if (settings.productCategories && settings.productCategories.length) { %>
+      <div class="chips" style="margin-bottom:var(--sp-4)">
+        <a class="chip" href="/products" aria-current="true">All products</a>
+        <% settings.productCategories.forEach(function (c) { %>
+          <a class="chip" href="/products/category/<%= c.url %>"><%= c.name %></a>
+        <% }); %>
+      </div>
     <% } %>
-">
-            <div class="hero-body">
-                <div class="container has-text-centered">
-                    <div class="content-wrapper">
-                        <h1 class="title is-spaced">
-                            <%= settings.productsPageTitle %>
-                        </h1>
-                        <h2 class="subtitle">
-                            <%= settings.productsPageSubtitle %>
-                        </h2>
 
-                        <div class="field" style="margin-top: 20px;">
-                            <div class="control">
-                                <input type="text" id="productSearch" class="input is-medium is-info search-bar"
-                                    placeholder="Search products by name">
-                            </div>
-                        </div>
-                    </div>
+    <form class="toolbar" style="margin-bottom:var(--sp-5)" role="search" onsubmit="return false">
+      <div class="field grow">
+        <label for="q">Search</label>
+        <input class="input" id="q" type="search" data-search placeholder="Product name or category" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="sort">Sort</label>
+        <select class="select" id="sort" data-sort>
+          <option value="featured">Shelf order</option>
+          <option value="new">Newest first</option>
+          <option value="price-asc">Price: low to high</option>
+          <option value="price-desc">Price: high to low</option>
+          <option value="name">Name: A to Z</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="t-label" id="vl">Layout</span>
+        <div class="view-toggle" role="group" aria-labelledby="vl">
+          <button type="button" data-view="default" aria-pressed="true" aria-label="Three per row"><i data-lucide="columns-3"></i></button>
+          <button type="button" data-view="compact" aria-pressed="false" aria-label="Four per row"><i data-lucide="columns-4"></i></button>
+        </div>
+      </div>
+    </form>
 
-                    <% if (settings.productCategories && settings.productCategories.length> 0) { %>
-                        <div class="categories-list">
-                            <% settings.productCategories.forEach(category=> { %>
-                                <a href="/products/category/<%= category.url %>" class="button is-store">
-                                    <%= category.name %>
-                                </a>
-                                <% }); %>
-                        </div>
-                        <% } %>
+    <p class="t-sm" style="margin-bottom:var(--sp-4)"><span data-count><%= products ? products.length : 0 %></span> product<%= products && products.length === 1 ? '' : 's' %></p>
 
-                </div>
+    <% if (!products || !products.length) { %>
+      <div class="state">
+        <i data-lucide="package-open"></i>
+        <h2>No products listed</h2>
+        <p>Nothing has been added to the shelf yet. Ask in the Discord when the next batch goes live.</p>
+        <a class="btn btn-primary" href="<%= settings.discordInviteLink %>">Join the Discord</a>
+      </div>
+    <% } else { %>
+      <div class="plates <%= settings.productGridDensity === 'cozy' ? 'dense' : '' %>" data-grid>
+        <% products.forEach(function (p) { %>
+        <% var now = new Date(); %>
+        <% var sale = p.onSale && p.saleStartDate && p.saleEndDate && new Date(p.saleStartDate) <= now && now <= new Date(p.saleEndDate); %>
+        <% var eff = sale ? p.salePrice : p.price; %>
+        <% var off = sale && p.price ? Math.round(((p.price - p.salePrice) / p.price) * 100) : 0; %>
+        <% var oos = p.productType === 'serials' && (!p.serials || !p.serials.length); %>
+        <% var low = p.productType === 'serials' && p.serials && p.serials.length > 0 && p.serials.length <= 5; %>
+        <% var desc = String(p.description || '').replace(/[#*`>\[\]()!]/g, '').slice(0, 96); %>
+        <article class="plate-card"
+          data-name="<%= p.name.toLowerCase() %>" data-cat="<%= (p.category || '').toLowerCase() %>"
+          data-price="<%= eff %>" data-pos="<%= p.position || 0 %>"
+          data-created="<%= p.createdAt ? new Date(p.createdAt).toISOString() : '' %>"
+          data-qv='<%- JSON.stringify({ img: "/" + p.bannerImage, cat: p.category || "", name: p.name, desc: desc, url: "/products/" + p.urlId, priceHtml: (p.productType === "digitalFree" ? "Free" : settings.currencySymbol + Number(eff).toFixed(2)) }).replace(/'/g, "&#39;") %>'>
+
+          <div class="plate-media">
+            <a href="/products/<%= p.urlId %>" tabindex="-1" aria-hidden="true"><img src="/<%= p.bannerImage %>" alt="" loading="lazy"></a>
+            <div class="plate-flags">
+              <% if (sale) { %><span class="flag flag-sale">−<%= off %>%</span><% } %>
+              <% if (p.productType === 'digitalFree') { %><span class="flag flag-free">Free</span><% } %>
+              <% if (p.pauseSelling) { %><span class="flag">Paused</span><% } %>
             </div>
-        </section>
+            <% if (settings.wishlistEnabled) { %>
+              <button class="save-btn" type="button" data-save="<%= p._id %>" aria-pressed="false" aria-label="Save <%= p.name %>"><i data-lucide="heart"></i></button>
+            <% } %>
+          </div>
 
-        <section class="section">
-            <div class="container">
-                <% if (products.length===0) { %>
-                    <div class="has-text-centered">
-                        <p class="title is-4" style="color: var(--title-color);">No products found.</p>
-                        <p class="subtitle" style="color: var(--subtitle-color);">Please check back later or explore
-                            other categories.</p>
-                    </div>
-                    <% } else { %>
-                        <div class="product-list" id="productList">
-                            <% products.forEach(product=> { %>
-                                <div class="product-card <%= product.onSale && new Date(product.saleStartDate) <= new Date() && new Date() <= new Date(product.saleEndDate) ? 'on-sale' : '' %>"
-                                    data-name="<%= product.name.toLowerCase() %>">
-                                    <% if (product.onSale && new Date(product.saleStartDate) <=new Date() && new Date()
-                                        <=new Date(product.saleEndDate)) { %>
-                                        <div class="product-badge-sale">
-                                            <%= Math.round(((product.price - product.salePrice) / product.price) * 100)
-                                                %>% Off
-                                        </div>
-                                        <% } %>
-                                            <div class="product-banner">
-                                                <img src="/<%= product.bannerImage %>" alt="<%= product.name %> Banner">
-                                            </div>
-                                            <div class="product-info">
-                                                <p class="product-name">
-                                                    <%= product.name %>
-                                                </p>
-                                                <% if (product.onSale && new Date(product.saleStartDate) <=new Date() &&
-                                                    new Date() <=new Date(product.saleEndDate)) { %>
-                                                    <p class="product-price">
-                                                        <span style="color: var(--price-color); font-weight: bold;">
-                                                            <%= settings.currencySymbol %><%= product.salePrice.toFixed(2) %>
-                                                        </span>
-                                                        <span
-                                                            style="text-decoration: line-through; font-style: italic; color: var(--subtitle-color);">
-                                                            <%= settings.currencySymbol %><%= product.price.toFixed(2) %>
-                                                        </span>
-                                                    </p>
-                                                    <% } else { %>
-                                                        <p class="product-price">
-                                                            <% if (product.productType==='digitalFree' ) { %>
-                                                                Free
-                                                                <% } else { %>
-                                                                    <%= settings.currencySymbol %><%= product.price.toFixed(2) %>
-                                                                            <% } %>
-                                                        </p>
-                                                        <% } %>
-                                                            <div class="buttons is-centered">
-                                                                <a href="/products/<%= product.urlId %>"
-                                                                    class="button is-info">
-                                                                    <span class="icon"><i class="fas fa-eye"></i></span>
-                                                                    <span>View</span>
-                                                                </a>
-                                                                <% if (!product.pauseSelling && product.productType
-                                                                    !=='digitalFree' ) { %>
-                                                                    <form action="/cart/add/<%= product._id %>"
-                                                                        method="POST">
-                                                                        <input type="hidden" name="_csrf"
-                                                                            value="<%= csrfToken %>">
-                                                                        <button type="submit" class="button is-success">
-                                                                            <span class="icon"><i
-                                                                                    class="fas fa-cart-plus"></i></span>
-                                                                            <span>Add to Cart</span>
-                                                                        </button>
-                                                                    </form>
-                                                                    <% } %>
-                                                            </div>
-                                            </div>
-                                </div>
-                                <% }); %>
-                        </div>
-                        <% } %>
-            </div>
-        </section>
+          <div class="plate-body">
+            <% if (p.category) { %><span class="plate-cat"><%= p.category %></span><% } %>
+            <h3><a href="/products/<%= p.urlId %>"><%= p.name %></a></h3>
+            <p class="plate-desc"><%= desc %></p>
+            <% if (oos) { %><span class="stock-line out"><span class="dot"></span>Out of stock</span>
+            <% } else if (low) { %><span class="stock-line low"><span class="dot"></span>Only <%= p.serials.length %> left</span><% } %>
+            <% if (sale) { %><span class="countdown" data-countdown="<%= new Date(p.saleEndDate).toISOString() %>"></span><% } %>
+          </div>
 
+          <div class="plate-buy">
+            <span class="price <%= sale ? 'is-sale' : '' %>">
+              <% if (p.productType === 'digitalFree') { %>Free<% } else { %><%= settings.currencySymbol %><%= Number(eff).toFixed(2) %><% if (sale) { %><s><%= settings.currencySymbol %><%= p.price.toFixed(2) %></s><% } %><% } %>
+            </span>
+            <span class="spacer"></span>
+            <button class="btn btn-quiet btn-sm" type="button" data-dialog-open="qv">Details</button>
+            <% if (!p.pauseSelling && !oos && p.productType !== 'digitalFree') { %>
+              <form action="/cart/add/<%= p._id %>" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-primary btn-sm" type="submit">Add to cart</button>
+              </form>
+            <% } else { %>
+              <a class="btn btn-ghost btn-sm" href="/products/<%= p.urlId %>"><%= oos ? 'View' : 'Open' %></a>
+            <% } %>
+          </div>
+        </article>
+        <% }); %>
+      </div>
 
+      <div class="state" data-empty hidden>
+        <i data-lucide="search"></i>
+        <h2>Nothing matches “<span data-term></span>”</h2>
+        <p>Try a shorter search term, or clear the search to see the whole shelf.</p>
+      </div>
+    <% } %>
 
-        <%- include('partials/footer') %>
+    <div data-recent-wrap style="margin-top:var(--sp-8)">
+      <h2 class="t-h3" style="margin-bottom:var(--sp-4)">Recently viewed</h2>
+      <div class="plates dense" data-recent></div>
+    </div>
+  </div>
+</section>
+</main>
 
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    const productSearch = document.getElementById('productSearch');
-                    const productList = document.getElementById('productList');
-                    const products = productList.getElementsByClassName('product-card');
+<div class="dialog-wrap" id="qv" data-open="false">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="qv-t">
+    <div class="dialog-head">
+      <h2 id="qv-t" data-qv-name></h2>
+      <button class="dialog-x" type="button" data-dialog-close aria-label="Close"><i data-lucide="x"></i></button>
+    </div>
+    <div class="dialog-body">
+      <img data-qv-img src="" alt="">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:var(--sp-4);margin-top:var(--sp-4);flex-wrap:wrap">
+        <span class="plate-cat" data-qv-cat></span>
+        <span class="price" data-qv-price style="font-size:1.25rem"></span>
+      </div>
+      <p class="t-body" data-qv-desc style="margin-top:var(--sp-3)"></p>
+      <a class="btn btn-primary btn-block" data-qv-link href="#" style="margin-top:var(--sp-5)">Open product page</a>
+    </div>
+  </div>
+</div>
 
-                    productSearch.addEventListener('input', function () {
-                        const filter = productSearch.value.toLowerCase();
-
-                        for (let i = 0; i < products.length; i++) {
-                            const productName = products[i].getAttribute('data-name');
-                            if (productName.includes(filter)) {
-                                products[i].style.display = '';
-                            } else {
-                                products[i].style.display = 'none';
-                            }
-                        }
-                    });
-                });
-            </script>
-
+<%- include('partials/footer') %>
 </body>
-
 </html>

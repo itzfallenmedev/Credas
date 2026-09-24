@@ -1,14 +1,19 @@
 {
-  "name": "plexstore",
-  "version": "1.1.3",
-  "description": "All-in-one e-commerce platform",
+  "name": "credas",
+  "version": "2.0.0",
+  "description": "Credas \u2014 curated digital storefront",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "node index.js"
   },
-  "keywords": [],
-  "author": "Plex Development",
-  "license": "ISC",
+  "keywords": [
+    "credas",
+    "ecommerce",
+    "storefront"
+  ],
+  "author": "Credas",
+  "license": "MIT",
   "dependencies": {
     "@paypal/checkout-server-sdk": "^1.0.3",
     "@sendgrid/mail": "^8.1.3",
@@ -22,7 +27,9 @@
     "discord.js": "^14.15.3",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.7.0",
     "express-session": "^1.18.0",
+    "helmet": "^8.3.0",
     "js-yaml": "^4.1.0",
     "lusca": "^1.7.0",
     "markdown-it": "^14.1.0",
@@ -42,5 +49,12 @@
   },
   "debug": {
     "dVersion": "%%__NONCE__%%"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourname/credas.git"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

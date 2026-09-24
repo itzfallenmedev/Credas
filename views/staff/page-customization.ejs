@@ -246,16 +246,58 @@
                 <p class="subtitle">Customize the text and features on different pages.</p>
                 
 
-                <form action="/staff/page-customization?_csrf=<%= encodeURIComponent(csrfToken) %>" method="POST">
+                <form action="/staff/page-customization" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                    <div class="card">
+                        <div class="card-title">Homepage Sections</div>
+                        <div class="hint">Choose which sections appear on the homepage.</div>
+                        <div class="field">
+                            <label class="checkbox">
+                                <input type="checkbox" name="displayFeatures" value="true" <% if (settings.displayFeatures) { %>checked<% } %> >
+                                Display feature cards
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="checkbox">
+                                <input type="checkbox" name="displayStats" value="true" <% if (settings.displayStats) { %>checked<% } %> >
+                                Display the impact / stats section
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="checkbox">
+                                <input type="checkbox" name="displayReviews" value="true" <% if (settings.displayReviews) { %>checked<% } %> >
+                                Display customer reviews
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="checkbox">
+                                <input type="checkbox" name="aboutUsVisible" value="true" <% if (settings.aboutUsVisible) { %>checked<% } %> >
+                                Display the about section
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="checkbox">
+                                <input type="checkbox" name="displayFaq" value="true" <% if (settings.displayFaq) { %>checked<% } %> >
+                                Display the FAQ accordion
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label class="checkbox">
+                                <input type="checkbox" name="displayCTABanner" value="true" <% if (settings.displayCTABanner) { %>checked<% } %> >
+                                Display the closing call-to-action banner
+                            </label>
+                        </div>
+                    </div>
 
                     <div class="card">
                         <div class="card-title">Font Customization</div>
                         <div class="field">
                             <label class="label">Choose Font Family</label>
                             <div class="control">
-                                <input class="input" type="text" name="fontSelector" value="<%= settings.websiteFont %>" placeholder="Enter font family">
+                                <input class="input" type="text" name="fontSelector" value="<%= settings.websiteFont %>" placeholder="IBM Plex Sans">
                             </div>
-                            <p class="help is-info">Enter the font family you want to use (e.g., 'Roboto', 'Arial').</p>
+                            <p class="help is-info">Body text font. Any Google Font family name. The display font for headings is set under Settings.</p>
                         </div>
                     </div>
 
@@ -427,6 +469,64 @@
                         </div>
                     </div>
 
+                    <div class="card">
+                        <div class="card-title">Social Links (footer icons)</div>
+                        <p class="help is-info">Shown under the store blurb in the footer. Icon takes any FontAwesome class, e.g. "fab fa-discord".</p>
+
+                        <div id="custom-social-links">
+                            <% (settings.socialLinks || []).forEach(function(s, index) { %>
+                            <div class="field custom-nav-tabs">
+                                <div class="control is-expanded">
+                                    <input class="input" type="text" name="socialLinks[<%= index %>][label]" placeholder="Label (e.g., Discord)" value="<%= s.label %>" required>
+                                </div>
+                                <div class="control is-expanded">
+                                    <input class="input" type="text" name="socialLinks[<%= index %>][url]" placeholder="URL (e.g., https://discord.gg/...)" value="<%= s.url %>" required>
+                                </div>
+                                <div class="control is-expanded">
+                                    <input class="input" type="text" name="socialLinks[<%= index %>][icon]" placeholder="Icon (e.g., fab fa-discord)" value="<%= s.icon %>">
+                                </div>
+                                <div class="buttons">
+                                    <button type="button" class="button is-danger" onclick="removeSocialLink(this)">Remove</button>
+                                </div>
+                            </div>
+                            <% }); %>
+                        </div>
+
+                        <div class="field">
+                            <div class="control">
+                                <button type="button" class="button is-info add-new-tab-button" onclick="addSocialLink()">Add Social Link</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">FAQ Items (homepage accordion)</div>
+                        <p class="help is-info">Answered plainly, in your own voice. Toggle visibility under Settings → Shop Behaviour.</p>
+
+                        <div id="custom-faq-items">
+                            <% (settings.faqItems || []).forEach(function(f, index) { %>
+                            <div class="field">
+                                <div class="control" style="margin-bottom:8px;">
+                                    <input class="input" type="text" name="faqItems[<%= index %>][question]" placeholder="Question" value="<%= f.question %>" required>
+                                </div>
+                                <div class="control is-expanded" style="display:flex;gap:10px;">
+                                    <textarea class="textarea" name="faqItems[<%= index %>][answer]" rows="2" placeholder="Answer" required style="flex:1;"><%= f.answer %></textarea>
+                                    <div class="buttons">
+                                        <button type="button" class="button is-danger" onclick="this.closest('.field').remove()">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr class="divider">
+                            <% }); %>
+                        </div>
+
+                        <div class="field">
+                            <div class="control">
+                                <button type="button" class="button is-info add-new-tab-button" onclick="addFaqItem()">Add FAQ Item</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="field">
                         <div class="control">
                             <button type="submit" class="button is-info">Save Customization</button>
@@ -480,6 +580,48 @@
 
         function removeFooterTab(button) {
             button.closest('.field').remove();
+        }
+
+        function addSocialLink() {
+            const index = document.querySelectorAll('#custom-social-links .field').length;
+            const fieldHTML = `
+            <div class="field custom-nav-tabs">
+                <div class="control is-expanded">
+                    <input class="input" type="text" name="socialLinks[${index}][label]" placeholder="Label (e.g., Discord)" required>
+                </div>
+                <div class="control is-expanded">
+                    <input class="input" type="text" name="socialLinks[${index}][url]" placeholder="URL (e.g., https://discord.gg/...)" required>
+                </div>
+                <div class="control is-expanded">
+                    <input class="input" type="text" name="socialLinks[${index}][icon]" placeholder="Icon (e.g., fab fa-discord)">
+                </div>
+                <div class="buttons">
+                    <button type="button" class="button is-danger" onclick="removeSocialLink(this)">Remove</button>
+                </div>
+            </div>`;
+            document.getElementById('custom-social-links').insertAdjacentHTML('beforeend', fieldHTML);
+        }
+
+        function removeSocialLink(button) {
+            button.closest('.field').remove();
+        }
+
+        function addFaqItem() {
+            const index = document.querySelectorAll('#custom-faq-items .field').length;
+            const fieldHTML = `
+            <div class="field">
+                <div class="control" style="margin-bottom:8px;">
+                    <input class="input" type="text" name="faqItems[${index}][question]" placeholder="Question" required>
+                </div>
+                <div class="control is-expanded" style="display:flex;gap:10px;">
+                    <textarea class="textarea" name="faqItems[${index}][answer]" rows="2" placeholder="Answer" required style="flex:1;"></textarea>
+                    <div class="buttons">
+                        <button type="button" class="button is-danger" onclick="this.closest('.field').remove()">Remove</button>
+                    </div>
+                </div>
+            </div>
+            <hr class="divider">`;
+            document.getElementById('custom-faq-items').insertAdjacentHTML('beforeend', fieldHTML);
         }
 
         function toggleCollapsibleContent(element) {
